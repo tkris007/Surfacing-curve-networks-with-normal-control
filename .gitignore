@@ -256,3 +256,4 @@ paket-files/
 .hg*
 
 PropertySheet.props
+*.props

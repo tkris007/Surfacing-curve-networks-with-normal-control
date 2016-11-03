@@ -1,13 +1,13 @@
 /****************************************************************************
 ** Resource object code
 **
-** Created by: The Resource Compiler for Qt version 5.6.0
+** Created by: The Resource Compiler for Qt version 5.5.1
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
 
 static const unsigned char qt_resource_data[] = {
-  // E:/prog_projektek/3D/Surfacing/Surfacing-curve-networks-with-normal-control/isophotes.png
+  // C:/Users/Bence/Source/Repos/Surfacing-curve-networks-with-normal-control/isophotes.png
   0x0,0x0,0x67,0xd7,
   0x89,
   0x50,0x4e,0x47,0xd,0xa,0x1a,0xa,0x0,0x0,0x0,0xd,0x49,0x48,0x44,0x52,0x0,
