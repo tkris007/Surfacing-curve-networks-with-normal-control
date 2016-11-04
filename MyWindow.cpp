@@ -65,11 +65,18 @@ MyWindow::~MyWindow()
 
 void MyWindow::open()
 {
-	QString fileName =
+	/*QString fileName =
 	    QFileDialog::getOpenFileName ( this, tr ( "Open File" ), ".",
 	                                   tr ( "Bezier surface (*.bzr);;All files (*.*)" ) );
 	if ( !fileName.isEmpty() )
 		if ( !viewer->openBezier ( fileName.toUtf8().data() ) )
+			QMessageBox::warning ( this, tr ( "Cannot open file" ),
+			                       tr ( "Could not open file: " ) + fileName + "." );*/
+	QString fileName =
+	    QFileDialog::getOpenFileName ( this, tr ( "Open File" ), ".",
+	                                   tr ( "BSCurve (*.bzr);;All files (*.*)" ) );
+	if ( !fileName.isEmpty() )
+		if ( !viewer->openBSCurves ( fileName.toUtf8().data() ) )
 			QMessageBox::warning ( this, tr ( "Cannot open file" ),
 			                       tr ( "Could not open file: " ) + fileName + "." );
 }
@@ -77,11 +84,18 @@ void MyWindow::open()
 void MyWindow::save()
 {
 
-	QString fileName =
+	/*QString fileName =
 	    QFileDialog::getSaveFileName ( this, tr ( "Save File" ), ".",
 	                                   tr ( "Bezier surface (*.bzr);;All files (*.*)" ) );
 	if ( !fileName.isEmpty() )
 		if ( !viewer->saveBezier ( fileName.toUtf8().data() ) )
+			QMessageBox::warning ( this, tr ( "Cannot save file" ),
+			                       tr ( "Could not save file: " ) + fileName + "." );*/
+	QString fileName =
+	    QFileDialog::getSaveFileName ( this, tr ( "Save File" ), ".",
+	                                   tr ( "BSCurve surface (*.bzr);;All files (*.*)" ) );
+	if ( !fileName.isEmpty() )
+		if ( !viewer->saveBSCurves ( fileName.toUtf8().data() ) )
 			QMessageBox::warning ( this, tr ( "Cannot save file" ),
 			                       tr ( "Could not save file: " ) + fileName + "." );
 }

@@ -4,6 +4,7 @@
 
 #include <QGLViewer/qglviewer.h>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+#include "geometry.hh"
 
 using qglviewer::Vec;
 
@@ -21,8 +22,10 @@ public:
 	inline double getMeanMax() const;
 	inline void setMeanMax ( double max );
 	bool openBezier ( std::string const &filename );
-
 	bool saveBezier ( std::string const& filename );
+
+	bool saveBSCurves ( std::string const& filename );
+	bool openBSCurves ( std::string const &filename );
 	void increaseDegree();
 
 
@@ -70,6 +73,8 @@ private:
 
 	size_t degree[2];
 	std::vector<Vec> control_points;
+
+	std::vector<Geometry::BSCurve> bsCurves;
 	MyMesh mesh;
 	double mean_min, mean_max;
 	double cutoff_ratio;

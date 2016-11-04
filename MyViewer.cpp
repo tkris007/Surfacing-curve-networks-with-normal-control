@@ -65,7 +65,7 @@ void MyViewer::updateMeanCurvature ( bool update_min_max )
 		{ mesh.data ( *i ).area += mesh.data ( *j ).area; }
 	}
 
-	for ( MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
+	/*for ( MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
 	{
 		double E, F, G, L, M, N, H;
 		size_t const n = degree[0], m = degree[1];
@@ -159,10 +159,10 @@ void MyViewer::updateMeanCurvature ( bool update_min_max )
 
 		H = ( N * E - 2 * M * F + L * G ) / ( 2 * ( E * G - F * F ) );
 		mesh.data ( *i ).mean = H;
-	}
+	}*/
 
 	// Compute mean values using normal difference angles
-	/*for ( MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
+	for ( MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
 	{
 		for ( MyMesh::ConstVertexEdgeIter j ( mesh, *i ); j.is_valid(); ++j )
 		{
@@ -183,7 +183,7 @@ void MyViewer::updateMeanCurvature ( bool update_min_max )
 		}
 		mesh.data ( *i ).mean *= 3.0 / 4.0 / mesh.data ( *i ).area;
 	}
-	*/
+
 	if ( update_min_max )
 	{ updateMeanMinMax(); }
 }
@@ -218,74 +218,75 @@ void MyViewer::meanMapColor ( double d, double *color ) const
 	}
 }
 
-bool MyViewer::openBezier ( std::string const &filename )
-{
-	size_t n, m;
-	try
-	{
-		std::ifstream f ( filename.c_str() );
-		f >> n >> m;
-		degree[0] = n++; degree[1] = m++;
-		control_points.resize ( n * m );
-		for ( size_t i = 0; i < n; ++i )
-			for ( size_t j = 0; j < m; ++j )
-			{
-				size_t const index = i * m + j;
-				f >> control_points[index][0] >> control_points[index][1] >> control_points[index][2];
-			}
-		f.close();
-	}
-	catch ( std::ifstream::failure )
-	{
-		return false;
-	}
+//bool MyViewer::openBezier ( std::string const &filename )
+//{
+//	size_t n, m;
+//	try
+//	{
+//		std::ifstream f ( filename.c_str() );
+//		f >> n >> m;
+//		degree[0] = n++; degree[1] = m++;
+//		control_points.resize ( n * m );
+//		for ( size_t i = 0; i < n; ++i )
+//			for ( size_t j = 0; j < m; ++j )
+//			{
+//				size_t const index = i * m + j;
+//				f >> control_points[index][0] >> control_points[index][1] >> control_points[index][2];
+//			}
+//		f.close();
+//	}
+//	catch ( std::ifstream::failure )
+//	{
+//		return false;
+//	}
+//
+//	generateMesh();
+//	mesh.request_face_normals(); mesh.request_vertex_normals();
+//	mesh.update_face_normals();  mesh.update_vertex_normals();
+//
+//	updateMeanCurvature();
+//
+//	// Set camera on the model
+//	MyMesh::Point box_min, box_max;
+//	box_min = box_max = mesh.point ( *mesh.vertices_begin() );
+//	for ( MyMesh::ConstVertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
+//	{
+//		box_min.minimize ( mesh.point ( *i ) );
+//		box_max.maximize ( mesh.point ( *i ) );
+//	}
+//	camera()->setSceneBoundingBox ( Vec ( box_min[0], box_min[1], box_min[2] ),
+//	                                Vec ( box_max[0], box_max[1], box_max[2] ) );
+//	camera()->showEntireScene();
+//
+//	setSelectedName ( -1 );
+//	axes.shown = false;
+//
+//	updateGL();
+//	return true;
+//}
 
-	generateMesh();
-	mesh.request_face_normals(); mesh.request_vertex_normals();
-	mesh.update_face_normals();  mesh.update_vertex_normals();
+//bool MyViewer::saveBezier ( std::string const & filename )
+//{
+//	size_t n = degree[0], m = degree[1];
+//	try
+//	{
+//		std::ofstream f ( filename.c_str() );
+//		f << n++ << " " << m++ << std::endl;
+//		for ( size_t i = 0; i < n; ++i )
+//			for ( size_t j = 0; j < m; ++j )
+//			{
+//				size_t const index = i * m + j;
+//				f << control_points[index][0] << " " << control_points[index][1] << " " << control_points[index][2] << std::endl;
+//			}
+//		f.close();
+//		return true;
+//	}
+//	catch ( std::ofstream::failure )
+//	{
+//		return false;
+//	}
+//}
 
-	updateMeanCurvature();
-
-	// Set camera on the model
-	MyMesh::Point box_min, box_max;
-	box_min = box_max = mesh.point ( *mesh.vertices_begin() );
-	for ( MyMesh::ConstVertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
-	{
-		box_min.minimize ( mesh.point ( *i ) );
-		box_max.maximize ( mesh.point ( *i ) );
-	}
-	camera()->setSceneBoundingBox ( Vec ( box_min[0], box_min[1], box_min[2] ),
-	                                Vec ( box_max[0], box_max[1], box_max[2] ) );
-	camera()->showEntireScene();
-
-	setSelectedName ( -1 );
-	axes.shown = false;
-
-	updateGL();
-	return true;
-}
-
-bool MyViewer::saveBezier ( std::string const & filename )
-{
-	size_t n = degree[0], m = degree[1];
-	try
-	{
-		std::ofstream f ( filename.c_str() );
-		f << n++ << " " << m++ << std::endl;
-		for ( size_t i = 0; i < n; ++i )
-			for ( size_t j = 0; j < m; ++j )
-			{
-				size_t const index = i * m + j;
-				f << control_points[index][0] << " " << control_points[index][1] << " " << control_points[index][2] << std::endl;
-			}
-		f.close();
-		return true;
-	}
-	catch ( std::ofstream::failure )
-	{
-		return false;
-	}
-}
 
 
 
@@ -313,7 +314,7 @@ void MyViewer::draw()
 		glDisable ( GL_LIGHTING );
 		glLineWidth ( 3.0 );
 		glColor3d ( 0.3, 0.3, 1.0 );
-		size_t const m = degree[1] + 1;
+		size_t const m = degree[0] + 1;
 		for ( size_t k = 0; k < 2; ++k )
 			for ( size_t i = 0; i <= degree[k]; ++i )
 			{

@@ -1,35 +1,46 @@
+#include "MyViewer.h"
 double MyViewer::getCutoffRatio() const
 {
-  return cutoff_ratio;
+	return cutoff_ratio;
 }
 
-void MyViewer::setCutoffRatio(double ratio)
+void MyViewer::setCutoffRatio ( double ratio )
 {
-  cutoff_ratio = ratio;
-  updateMeanMinMax();
+	cutoff_ratio = ratio;
+	updateMeanMinMax();
 }
 
 double MyViewer::getMeanMin() const
 {
-  return mean_min;
+	return mean_min;
 }
 
-void MyViewer::setMeanMin(double min)
+void MyViewer::setMeanMin ( double min )
 {
-  mean_min = min;
+	mean_min = min;
 }
 
 double MyViewer::getMeanMax() const
 {
-  return mean_max;
+	return mean_max;
 }
 
-void MyViewer::setMeanMax(double max)
+void MyViewer::setMeanMax ( double max )
 {
-  mean_max = max;
+	mean_max = max;
 }
 
-MyViewer::Vector MyViewer::halfedgeVector(MyMesh::HalfedgeHandle const &h) const
+inline bool MyViewer::saveBSCurves ( std::string const & filename )
 {
-  return mesh.point(mesh.to_vertex_handle(h)) - mesh.point(mesh.from_vertex_handle(h));
+	return false;
+}
+
+inline bool MyViewer::openBSCurves ( std::string const & filename )
+{
+	return false;
+}
+
+MyViewer::Vector MyViewer::halfedgeVector ( MyMesh::HalfedgeHandle const &h ) const
+{
+	return mesh.point ( mesh.to_vertex_handle ( h ) ) - mesh.point ( mesh.from_vertex_handle ( h ) );
 }
