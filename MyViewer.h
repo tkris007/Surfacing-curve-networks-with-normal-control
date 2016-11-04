@@ -21,8 +21,7 @@ public:
 	inline void setMeanMin ( double min );
 	inline double getMeanMax() const;
 	inline void setMeanMax ( double max );
-	bool openBezier ( std::string const &filename );
-	bool saveBezier ( std::string const& filename );
+
 	bool openBSpline ( std::string const &filename );
 	bool saveBSpline ( std::string const& filename );
 

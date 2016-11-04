@@ -222,32 +222,6 @@ void MyViewer::meanMapColor ( double d, double *color ) const
 	}
 }
 
-bool MyViewer::openBezier ( std::string const &filename )
-{
-	size_t n, m;
-	try
-	{
-		std::ifstream f ( filename.c_str() );
-		f >> n >> m;
-		degree[0] = n++; degree[1] = m++;
-		control_points.resize ( n * m );
-		for ( size_t i = 0; i < n; ++i )
-			for ( size_t j = 0; j < m; ++j )
-			{
-				size_t const index = i * m + j;
-				f >> control_points[index][0] >> control_points[index][1] >> control_points[index][2];
-			}
-		f.close();
-	}
-	catch ( std::ifstream::failure )
-	{
-		return false;
-	}
-
-	generateMesh();
-	mesh.request_face_normals(); mesh.request_vertex_normals();
-	mesh.update_face_normals();  mesh.update_vertex_normals();
-
 std::istringstream MyViewer::nextLine(std::ifstream &file) {
 
 	std::string line;
@@ -300,7 +274,7 @@ void MyViewer::readBSCurve(std::ifstream &file) {
 	}
 
 	// Create new BSCurve and add it to bsCurves
-	bsCurves.push_back(Geometry::BSCurve ( degree, knots, cpts ));
+	bsCurves.push_back(std::shared_ptr<Geometry::BSCurve> (new Geometry::BSCurve ( degree, knots, cpts )));
 }
 
 bool MyViewer::openBSpline ( std::string const &filename ) {
