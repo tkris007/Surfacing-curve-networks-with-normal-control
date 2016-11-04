@@ -439,36 +439,51 @@ void MyViewer::drawControlPoints() const
 
 void MyViewer::drawNormals() const
 {
-	/*Transfinite::RMF rmf;
+	Transfinite::RMF rmf;
 
 	for ( size_t i = 0; i < bsCurves.size(); ++i )
 	{
 		rmf.setCurve ( bsCurves[i] );
-		std::vector<Geometry::Vector3D> der1;
-		std::vector<Geometry::Vector3D> der2;
+		std::vector<Geometry::Vector3D> derstart1;
+		std::vector<Geometry::Vector3D> derstart2;
+		std::vector<Geometry::Vector3D> derend1;
+		std::vector<Geometry::Vector3D> derend2;
 		if ( i == 0 )
 		{
-			bsCurves[i]->eval ( 0, 1, der1 );
-			bsCurves[bsCurves.size() - 1]->eval ( 1, 1, der2 );
-			rmf.setStart ( der1[1] ^  der2[1] );
-			rmf.setEnd ( bsCurves[i]->eval ( 1 ) ^ bsCurves[i + 1]->eval ( 0 ) );
+			bsCurves[0]->eval ( 0, 1, derstart1 );
+			bsCurves[bsCurves.size() - 1]->eval ( 1, 1, derstart2 );
+
+			bsCurves[0]->eval ( 1, 1, derend1 );
+			bsCurves[1]->eval ( 0, 1, derend2 );
 		}
 		else if ( i == bsCurves.size() - 1 )
 		{
-			rmf.setStart ( bsCurves[bsCurves.size() - 1]->eval ( 0 ) ^ bsCurves[bsCurves.size() - 2]->eval ( 1 ) );
-			rmf.setEnd ( bsCurves[bsCurves.size() - 1]->eval ( 1 ) ^ bsCurves[0]->eval ( 0 ) );
+			bsCurves[bsCurves.size() - 1]->eval ( 0, 1, derstart1 );
+			bsCurves[bsCurves.size() - 2]->eval ( 1, 1, derstart2 );
+
+			bsCurves[bsCurves.size() - 1]->eval ( 1, 1, derend1 );
+			bsCurves[0]->eval ( 0, 1, derend2 );
 		}
+		else
+		{
+			bsCurves[i]->eval ( 0, 1, derstart1 );
+			bsCurves[i - 1]->eval ( 1, 1, derstart2 );
+
+			bsCurves[i]->eval ( 1, 1, derend1 );
+			bsCurves[i + 1]->eval ( 0, 1, derend2 );
+		}
+		rmf.setStart ( ( derstart1[1] ^ derstart2[1] ).normalize() );
+		rmf.setEnd ( ( derend1[1] ^ derend2[1] ).normalize() );
 		for ( float t = 0; t < 1; t += 0.1f )
 		{
-			glBegin ( GL_LINE_STRIP );
-
-
-			Vec const &p = Vec ( bsCurves[i]->eval ( t ) );
+			Vec const &arrowEndPoint = Vec ( rmf.eval ( t ) );
+			Vec const &arrowStartPoint = Vec ( bsCurves[i]->eval ( t ) );
 			glColor3f ( 1.0, 0.0, 0.0 );
-			drawArrow ( p, p + Vec ( axes.size, 0.0, 0.0 ), axes.size / 50.0 );
+			drawArrow ( arrowStartPoint, ( arrowStartPoint + arrowEndPoint ) * 10, ( ( arrowStartPoint + arrowEndPoint ) * 10 ).norm() / 50.0 );
 
 			glEnd();
-		}*/
+		}
+	}
 }
 
 void MyViewer::drawAxes() const
@@ -730,11 +745,13 @@ void MyViewer::mouseMoveEvent ( QMouseEvent * e )
 		Vec p = intersectLines ( axes.grabbed_pos, axis, from, dir );
 		float d = ( p - axes.grabbed_pos ) * axis;
 		axes.position[axes.selected_axis] = axes.original_pos[axes.selected_axis] + d;
-		control_points[selected] = Vec ( axes.position[0], axes.position[1], axes.position[2] );
-		generateMesh();
-		mesh.request_face_normals(); mesh.request_vertex_normals();
-		mesh.update_face_normals();  mesh.update_vertex_normals();
-		updateMeanCurvature();
+		bsCurves[selected / 1000]->getControlPoints() [selected % 1000][0] = Vec ( axes.position[0], axes.position[1], axes.position[2] ) [0];
+		bsCurves[selected / 1000]->getControlPoints() [selected % 1000][1] = Vec ( axes.position[0], axes.position[1], axes.position[2] ) [1];
+		bsCurves[selected / 1000]->getControlPoints() [selected % 1000][2] = Vec ( axes.position[0], axes.position[1], axes.position[2] ) [2];
+		/*	generateMesh();
+			mesh.request_face_normals(); mesh.request_vertex_normals();
+			mesh.update_face_normals();  mesh.update_vertex_normals();
+			updateMeanCurvature();*/
 		updateGL();
 	}
 	else
