@@ -74,9 +74,9 @@ void MyWindow::open()
 			                       tr ( "Could not open file: " ) + fileName + "." );*/
 	QString fileName =
 	    QFileDialog::getOpenFileName ( this, tr ( "Open File" ), ".",
-	                                   tr ( "BSCurve (*.bzr);;All files (*.*)" ) );
+	                                   tr ( "BSCurve (*.bspline);;All files (*.*)" ) );
 	if ( !fileName.isEmpty() )
-		if ( !viewer->openBSCurves ( fileName.toUtf8().data() ) )
+		if ( !viewer->openBSpline ( fileName.toUtf8().data() ) )
 			QMessageBox::warning ( this, tr ( "Cannot open file" ),
 			                       tr ( "Could not open file: " ) + fileName + "." );
 }
@@ -93,9 +93,9 @@ void MyWindow::save()
 			                       tr ( "Could not save file: " ) + fileName + "." );*/
 	QString fileName =
 	    QFileDialog::getSaveFileName ( this, tr ( "Save File" ), ".",
-	                                   tr ( "BSCurve surface (*.bzr);;All files (*.*)" ) );
+	                                   tr ( "BSCurve surface (*.bspline);;All files (*.*)" ) );
 	if ( !fileName.isEmpty() )
-		if ( !viewer->saveBSCurves ( fileName.toUtf8().data() ) )
+		if ( !viewer->saveBSpline ( fileName.toUtf8().data() ) )
 			QMessageBox::warning ( this, tr ( "Cannot save file" ),
 			                       tr ( "Could not save file: " ) + fileName + "." );
 }

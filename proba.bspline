@@ -1,0 +1,21 @@
+2                   # a gorbek szama
+
+3                   # az 1. gorbe fokszama
+9                   # az 1. gorbe csomovektoranak hossza
+0 0 0 0 0.5 1 1 1 1 # az 1. gorbe csomovektora
+5                   # az 1. gorbe kontrollpontjainak szama
+0 0 1               # az 1. gorbe 1. kontrollpontjanak koordinatai
+0 0 2               # az 1. gorbe 2. kontrollpontjanak koordinatai
+0 2 1               # az 1. gorbe 3. kontrollpontjanak koordinatai
+2 0 1               # az 1. gorbe 4. kontrollpontjanak koordinatai
+2 2 1               # az 1. gorbe 5. kontrollpontjanak koordinatai
+
+3                   # az 2. gorbe fokszama
+9                   # az 2. gorbe csomovektoranak hossza
+0 0 0 0 0.5 1 1 1 1 # az 2. gorbe csomovektora
+5                   # az 2. gorbe kontrollpontjainak szama
+2 2 1               # az 2. gorbe 1. kontrollpontjanak koordinatai
+1 0 2               # az 2. gorbe 2. kontrollpontjanak koordinatai
+1 2 1               # az 2. gorbe 3. kontrollpontjanak koordinatai
+3 0 1               # az 2. gorbe 4. kontrollpontjanak koordinatai
+3 2 1               # az 2. gorbe 5. kontrollpontjanak koordinatai

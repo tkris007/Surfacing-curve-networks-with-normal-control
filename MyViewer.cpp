@@ -2,7 +2,10 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <vector>
+#include <string>
+#include <QDebug>
 
 #include <QtGui/QKeyEvent>
 
@@ -67,98 +70,98 @@ void MyViewer::updateMeanCurvature ( bool update_min_max )
 
 	/*for ( MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
 	{
-		double E, F, G, L, M, N, H;
-		size_t const n = degree[0], m = degree[1];
+	double E, F, G, L, M, N, H;
+	size_t const n = degree[0], m = degree[1];
 
-		std::vector<double> coeff_Su, coeff_v, coeff_Sv, coeff_u, coeff_Suu, coeff_Svv;
+	std::vector<double> coeff_Su, coeff_v, coeff_Sv, coeff_u, coeff_Suu, coeff_Svv;
 
-		double u = mesh.data ( *i ).u;
-		double v = mesh.data ( *i ).v;
+	double u = mesh.data ( *i ).u;
+	double v = mesh.data ( *i ).v;
 
-		bernsteinAll ( n - 1, u, coeff_Su );
-		bernsteinAll ( m, v, coeff_v );
-		bernsteinAll ( n , u, coeff_u );
-		bernsteinAll ( m - 1, v, coeff_Sv );
-		bernsteinAll ( n - 2, u, coeff_Suu );
-		bernsteinAll ( m - 2, v, coeff_Svv );
+	bernsteinAll ( n - 1, u, coeff_Su );
+	bernsteinAll ( m, v, coeff_v );
+	bernsteinAll ( n , u, coeff_u );
+	bernsteinAll ( m - 1, v, coeff_Sv );
+	bernsteinAll ( n - 2, u, coeff_Suu );
+	bernsteinAll ( m - 2, v, coeff_Svv );
 
 
-		Vec Su ( 0.0, 0.0, 0.0 );
-		Vec Sv ( 0.0, 0.0, 0.0 );
+	Vec Su ( 0.0, 0.0, 0.0 );
+	Vec Sv ( 0.0, 0.0, 0.0 );
 
-		Vec Suu ( 0.0, 0.0, 0.0 );
-		Vec Svv ( 0.0, 0.0, 0.0 );
-		Vec Suv ( 0.0, 0.0, 0.0 );
+	Vec Suu ( 0.0, 0.0, 0.0 );
+	Vec Svv ( 0.0, 0.0, 0.0 );
+	Vec Suv ( 0.0, 0.0, 0.0 );
 
-		Vec normal;
+	Vec normal;
 
-		for ( size_t k = 0; k <= n - 1; ++k )
-			for ( size_t l = 0; l <= m; ++l )
-			{
+	for ( size_t k = 0; k <= n - 1; ++k )
+	for ( size_t l = 0; l <= m; ++l )
+	{
 
-				size_t const index1 = k * ( m + 1 ) + l;
-				size_t const index2 = ( k + 1 ) * ( m + 1 ) + l;
-				Su += ( control_points[index2] - control_points[index1] ) * coeff_Su[k] * coeff_v[l];
-			}
-		Su *= n;
+	size_t const index1 = k * ( m + 1 ) + l;
+	size_t const index2 = ( k + 1 ) * ( m + 1 ) + l;
+	Su += ( control_points[index2] - control_points[index1] ) * coeff_Su[k] * coeff_v[l];
+	}
+	Su *= n;
 
-		for ( size_t k = 0; k <= n; ++k )
-			for ( size_t l = 0; l <= m - 1; ++l )
-			{
+	for ( size_t k = 0; k <= n; ++k )
+	for ( size_t l = 0; l <= m - 1; ++l )
+	{
 
-				size_t const index1 = k * ( m + 1 ) + l;
-				size_t const index2 = ( k ) * ( m + 1 ) + l + 1;
-				Sv += ( control_points[index2] - control_points[index1] ) * coeff_u[k] * coeff_Sv[l];
-			}
-		Sv *= m;
+	size_t const index1 = k * ( m + 1 ) + l;
+	size_t const index2 = ( k ) * ( m + 1 ) + l + 1;
+	Sv += ( control_points[index2] - control_points[index1] ) * coeff_u[k] * coeff_Sv[l];
+	}
+	Sv *= m;
 
-		for ( size_t k = 0; k <= n - 2; ++k )
-			for ( size_t l = 0; l <= m; ++l )
-			{
+	for ( size_t k = 0; k <= n - 2; ++k )
+	for ( size_t l = 0; l <= m; ++l )
+	{
 
-				size_t const index1 = k * ( m + 1 ) + l;
-				size_t const index2 = ( k + 1 ) * ( m + 1 ) + l;
-				size_t const index3 = ( k + 2 ) * ( m + 1 ) + l;
-				Suu += ( control_points[index3] - 2.0 * control_points[index2] +  control_points[index1] ) * coeff_Suu[k] * coeff_v[l];
-			}
+	size_t const index1 = k * ( m + 1 ) + l;
+	size_t const index2 = ( k + 1 ) * ( m + 1 ) + l;
+	size_t const index3 = ( k + 2 ) * ( m + 1 ) + l;
+	Suu += ( control_points[index3] - 2.0 * control_points[index2] +  control_points[index1] ) * coeff_Suu[k] * coeff_v[l];
+	}
 
-		Suu *= n * ( n - 1 );
+	Suu *= n * ( n - 1 );
 
-		for ( size_t k = 0; k <= n ; ++k )
-			for ( size_t l = 0; l <= m - 2; ++l )
-			{
+	for ( size_t k = 0; k <= n ; ++k )
+	for ( size_t l = 0; l <= m - 2; ++l )
+	{
 
-				size_t const index1 = k * ( m + 1 ) + l;
-				size_t const index2 = k * ( m + 1 ) + l + 1;
-				size_t const index3 = k * ( m + 1 ) + l + 2;
-				Svv += ( control_points[index3] - 2.0 * control_points[index2] + control_points[index1] ) * coeff_u[k] * coeff_Svv[l];
-			}
+	size_t const index1 = k * ( m + 1 ) + l;
+	size_t const index2 = k * ( m + 1 ) + l + 1;
+	size_t const index3 = k * ( m + 1 ) + l + 2;
+	Svv += ( control_points[index3] - 2.0 * control_points[index2] + control_points[index1] ) * coeff_u[k] * coeff_Svv[l];
+	}
 
-		Svv *= m * ( m - 1 );
+	Svv *= m * ( m - 1 );
 
-		for ( size_t k = 0; k <= n - 1; ++k )
-			for ( size_t l = 0; l <= m - 1; ++l )
-			{
+	for ( size_t k = 0; k <= n - 1; ++k )
+	for ( size_t l = 0; l <= m - 1; ++l )
+	{
 
-				size_t const index1 = k * ( m + 1 ) + l;
-				size_t const index2 = ( k + 1 ) * ( m + 1 ) + l + 1;
+	size_t const index1 = k * ( m + 1 ) + l;
+	size_t const index2 = ( k + 1 ) * ( m + 1 ) + l + 1;
 
-				Suv += ( control_points[index2] + control_points[index1] ) * coeff_Su[k] * coeff_Sv[l];
-			}
+	Suv += ( control_points[index2] + control_points[index1] ) * coeff_Su[k] * coeff_Sv[l];
+	}
 
-		Suv *= m * n;
-		normal = cross ( Su, Sv );
-		normal.normalize();
-		E = Su * Su;
-		F = Su * Sv;
-		G = Sv * Sv;
+	Suv *= m * n;
+	normal = cross ( Su, Sv );
+	normal.normalize();
+	E = Su * Su;
+	F = Su * Sv;
+	G = Sv * Sv;
 
-		L = normal * Suu;
-		M = normal * Suv;
-		N = normal * Svv;
+	L = normal * Suu;
+	M = normal * Suv;
+	N = normal * Svv;
 
-		H = ( N * E - 2 * M * F + L * G ) / ( 2 * ( E * G - F * F ) );
-		mesh.data ( *i ).mean = H;
+	H = ( N * E - 2 * M * F + L * G ) / ( 2 * ( E * G - F * F ) );
+	mesh.data ( *i ).mean = H;
 	}*/
 
 	// Compute mean values using normal difference angles
@@ -287,7 +290,91 @@ void MyViewer::meanMapColor ( double d, double *color ) const
 //	}
 //}
 
+std::istringstream MyViewer::nextLine(std::ifstream &file) {
 
+	std::string line;
+	std::getline(file, line); 
+	// Ignore empty lines
+	while(!file.eof() && line.length() == 0) {
+
+		std::getline(file, line); 
+	}
+	std::istringstream ss(line);
+
+	QString qstr = QString::fromStdString(line);
+	qDebug() << qstr;
+
+	return ss;
+}
+
+void MyViewer::readBSCurve(std::ifstream &file) {
+
+	// Read degree
+	int degree;
+	nextLine(file) >> degree;
+
+	// Read knots
+	std::vector<double> knots;
+	int numberOfKnots;
+	nextLine(file) >> numberOfKnots;
+	std::istringstream ss = nextLine(file);
+	for(int i = 0; i < numberOfKnots; i++) {
+
+		double knot;
+		ss >> knot;
+		knots.push_back(knot);
+	}
+
+	// Read control points
+	std::vector<Geometry::Vector3D> cpts;
+	int numberOfCpts;
+	nextLine(file) >> numberOfCpts;
+	for(int i = 0; i < numberOfCpts; i++) {
+
+		std::istringstream ss = nextLine(file);
+		double x; 
+		ss >> x;
+		double y; 
+		ss >> y;
+		double z; 
+		ss >> z;
+		cpts.push_back(Geometry::Vector3D(x,y,z));
+	}
+
+	// Create new BSCurve and add it to bsCurves
+	bsCurves.push_back(Geometry::BSCurve ( degree, knots, cpts ));
+}
+
+bool MyViewer::openBSpline ( std::string const &filename ) {
+
+	try {
+
+		std::ifstream file ( filename.c_str() );
+		if (file.good())
+		{
+			int numberOfCurves;
+			nextLine(file) >>  numberOfCurves;
+			// ... you now get a number ...
+			qDebug() << numberOfCurves;
+
+			for(int i = 0; i < numberOfCurves; i++)
+			{
+				readBSCurve(file);
+			}
+		}
+
+		return true;
+
+	} catch (std::ifstream::failure) {
+
+		return false;
+	}
+}
+
+bool MyViewer::saveBSpline ( std::string const& filename ) {
+
+	return true;
+}
 
 
 void MyViewer::init()
@@ -301,7 +388,7 @@ void MyViewer::init()
 	glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 	glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	glTexImage2D ( GL_TEXTURE_2D, 0, GL_RGBA8, img.width(), img.height(), 0, GL_BGRA,
-	               GL_UNSIGNED_BYTE, img.convertToFormat ( QImage::Format_ARGB32 ).bits() );
+		GL_UNSIGNED_BYTE, img.convertToFormat ( QImage::Format_ARGB32 ).bits() );
 }
 
 void MyViewer::draw()
@@ -327,18 +414,18 @@ void MyViewer::draw()
 				}
 				glEnd();
 			}
-		glLineWidth ( 1.0 );
-		glPointSize ( 8.0 );
-		glColor3d ( 1.0, 0.0, 1.0 );
-		glBegin ( GL_POINTS );
-		for ( size_t i = 0, ie = control_points.size(); i < ie; ++i )
-		{
-			Vec const &p = control_points[i];
-			glVertex3d ( p[0], p[1], p[2] );
-		}
-		glEnd();
-		glPointSize ( 1.0 );
-		glEnable ( GL_LIGHTING );
+			glLineWidth ( 1.0 );
+			glPointSize ( 8.0 );
+			glColor3d ( 1.0, 0.0, 1.0 );
+			glBegin ( GL_POINTS );
+			for ( size_t i = 0, ie = control_points.size(); i < ie; ++i )
+			{
+				Vec const &p = control_points[i];
+				glVertex3d ( p[0], p[1], p[2] );
+			}
+			glEnd();
+			glPointSize ( 1.0 );
+			glEnable ( GL_LIGHTING );
 	}
 
 	if ( !show_solid && show_wireframe )
@@ -492,7 +579,7 @@ void MyViewer::keyPressEvent ( QKeyEvent *e )
 {
 	if ( e->modifiers() == Qt::NoModifier )
 		switch ( e->key() )
-		{
+	{
 		case Qt::Key_P:
 			coloring = COLOR_PLAIN;
 			updateGL();
@@ -523,7 +610,7 @@ void MyViewer::keyPressEvent ( QKeyEvent *e )
 			break;
 		default:
 			QGLViewer::keyPressEvent ( e );
-		}
+	}
 	else
 	{ QGLViewer::keyPressEvent ( e ); }
 }
@@ -622,9 +709,9 @@ void MyViewer::generateMesh()
 					size_t const index = k * ( m + 1 ) + l;
 					p += control_points[index] * coeff_u[k] * coeff_v[l];
 				}
-			handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p[0], p[1], p[2] ) ) );
-			mesh.data ( handles[handles.size() - 1] ).u = u;
-			mesh.data ( handles[handles.size() - 1] ).v = v;
+				handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p[0], p[1], p[2] ) ) );
+				mesh.data ( handles[handles.size() - 1] ).u = u;
+				mesh.data ( handles[handles.size() - 1] ).v = v;
 		}
 	}
 	for ( size_t i = 0; i < resolution - 1; ++i )
@@ -646,7 +733,7 @@ void MyViewer::generateMesh()
 void MyViewer::mouseMoveEvent ( QMouseEvent *e )
 {
 	if ( axes.shown && axes.selected_axis >= 0 &&
-	        e->modifiers() & Qt::ShiftModifier && e->buttons() & Qt::LeftButton )
+		e->modifiers() & Qt::ShiftModifier && e->buttons() & Qt::LeftButton )
 	{
 		Vec axis = Vec ( axes.selected_axis == 0, axes.selected_axis == 1, axes.selected_axis == 2 );
 		Vec from, dir;
@@ -668,32 +755,32 @@ void MyViewer::mouseMoveEvent ( QMouseEvent *e )
 QString MyViewer::helpString() const
 {
 	QString text ( "<h2>Sample Framework</h2>"
-	               "<p>This is a minimal framework for 3D mesh manipulation, which can be "
-	               "extended and used as a base for various projects, for example "
-	               "prototypes for fairing algorithms, or even displaying/modifying "
-	               "parametric surfaces, etc.</p>"
-	               "<p>The following hotkeys are available:</p>"
-	               "<ul>"
-	               "<li>&nbsp;P: Set plain map (no coloring)</li>"
-	               "<li>&nbsp;M: Set mean curvature map</li>"
-	               "<li>&nbsp;I: Set isophote line map</li>"
-	               "<li>&nbsp;C: Toggle control polygon visualization</li>"
-	               "<li>&nbsp;S: Toggle solid (filled polygon) visualization</li>"
-	               "<li>&nbsp;W: Toggle wireframe visualization</li>"
-	               "</ul>"
-	               "<p>There is also a simple selection and movement interface, enabled "
-	               "only when control points are displayed: a control point can be selected "
-	               "by shift-clicking, and it can be moved by shift-dragging one of the "
-	               "displayed axes.</p>"
-	               "<p>Note that libQGLViewer is furnished with a lot of useful features, "
-	               "such as storing/loading view positions, or saving screenshots. "
-	               "OpenMesh also has a nice collection of tools for mesh manipulation: "
-	               "decimation, subdivision, smoothing, etc. These can provide "
-	               "good comparisons to the methods you implement.</p>"
-	               "<p>This software can be used as a sample GUI base for handling "
-	               "parametric or procedural surfaces, as well. The power of "
-	               "Qt and libQGLViewer makes it easy to set up a prototype application. "
-	               "Feel free to modify and explore!</p>"
-	               "<p align=\"right\">Peter Salvi</p>" );
+		"<p>This is a minimal framework for 3D mesh manipulation, which can be "
+		"extended and used as a base for various projects, for example "
+		"prototypes for fairing algorithms, or even displaying/modifying "
+		"parametric surfaces, etc.</p>"
+		"<p>The following hotkeys are available:</p>"
+		"<ul>"
+		"<li>&nbsp;P: Set plain map (no coloring)</li>"
+		"<li>&nbsp;M: Set mean curvature map</li>"
+		"<li>&nbsp;I: Set isophote line map</li>"
+		"<li>&nbsp;C: Toggle control polygon visualization</li>"
+		"<li>&nbsp;S: Toggle solid (filled polygon) visualization</li>"
+		"<li>&nbsp;W: Toggle wireframe visualization</li>"
+		"</ul>"
+		"<p>There is also a simple selection and movement interface, enabled "
+		"only when control points are displayed: a control point can be selected "
+		"by shift-clicking, and it can be moved by shift-dragging one of the "
+		"displayed axes.</p>"
+		"<p>Note that libQGLViewer is furnished with a lot of useful features, "
+		"such as storing/loading view positions, or saving screenshots. "
+		"OpenMesh also has a nice collection of tools for mesh manipulation: "
+		"decimation, subdivision, smoothing, etc. These can provide "
+		"good comparisons to the methods you implement.</p>"
+		"<p>This software can be used as a sample GUI base for handling "
+		"parametric or procedural surfaces, as well. The power of "
+		"Qt and libQGLViewer makes it easy to set up a prototype application. "
+		"Feel free to modify and explore!</p>"
+		"<p align=\"right\">Peter Salvi</p>" );
 	return text;
 }
