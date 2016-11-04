@@ -30,15 +30,7 @@ void MyViewer::setMeanMax ( double max )
 	mean_max = max;
 }
 
-inline bool MyViewer::saveBSCurves ( std::string const & filename )
-{
-	return false;
-}
 
-inline bool MyViewer::openBSCurves ( std::string const & filename )
-{
-	return false;
-}
 
 MyViewer::Vector MyViewer::halfedgeVector ( MyMesh::HalfedgeHandle const &h ) const
 {
