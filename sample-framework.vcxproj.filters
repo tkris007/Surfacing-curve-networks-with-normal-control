@@ -71,6 +71,15 @@
     <ClCompile Include="GeneratedFiles\qrc_sample-framework.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
+    <ClCompile Include="bspline.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rmf.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vector.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="MyViewer.h">
@@ -90,5 +99,13 @@
     <CustomBuild Include="sample-framework.qrc">
       <Filter>Resource Files</Filter>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="geometry.hh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rmf.hh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

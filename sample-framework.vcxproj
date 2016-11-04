@@ -27,7 +27,7 @@
     <PrimaryOutput>sample-framework</PrimaryOutput>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <PlatformToolSet>v140</PlatformToolSet>
+    <PlatformToolSet>v110</PlatformToolSet>
     <OutputDirectory>debug\</OutputDirectory>
     <ATLMinimizesCRunTimeLibraryUsage>false</ATLMinimizesCRunTimeLibraryUsage>
     <CharacterSet>NotSet</CharacterSet>
@@ -52,7 +52,7 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">sample-framework</TargetName>
     <IgnoreImportLibrary Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</IgnoreImportLibrary>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Configuration)</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">sample-framework</TargetName>
     <IgnoreImportLibrary Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</IgnoreImportLibrary>
@@ -141,6 +141,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bspline.cc" />
     <ClCompile Include="Debug\moc_MyViewer.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -156,8 +157,11 @@
     <ClCompile Include="MyViewer.cpp" />
     <ClCompile Include="MyWindow.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="rmf.cc" />
+    <ClCompile Include="vector.cc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="rmf.hh" />
     <CustomBuild Include="MyViewer.h">
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o "$(ConfigurationName)\moc_%(Filename).cpp"  -D_WINDOWS -DUNICODE -DWIN32 -DWIN64 -DQT_NO_DEBUG -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_XML_LIB -DQT_CORE_LIB -DNDEBUG -D_USE_MATH_DEFINES  "-I." "-I$(QT_IncludePath)\." "-I$(QT_IncludePath)\QtOpenGL" "-I$(QT_IncludePath)\QtWidgets" "-I$(QT_IncludePath)\QtGui" "-I$(QT_IncludePath)\QtANGLE" "-I$(QT_IncludePath)\QtXml" "-I$(QT_IncludePath)\QtCore" "-I.\release" "-I$(OpenMesh_IncludePath)\." "-I$(QGLViewer_IncludePath)\."</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Moc%27ing MyViewer.h...</Message>
@@ -168,6 +172,7 @@
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
     </CustomBuild>
+    <ClInclude Include="geometry.hh" />
     <ClInclude Include="MyViewer.hpp" />
     <CustomBuild Include="MyWindow.h">
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o "$(ConfigurationName)\moc_%(Filename).cpp"  -D_WINDOWS -DUNICODE -DWIN32 -DWIN64 -DQT_NO_DEBUG -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_XML_LIB -DQT_CORE_LIB -DNDEBUG -D_USE_MATH_DEFINES  "-I." "-I$(QT_IncludePath)\." "-I$(QT_IncludePath)\QtOpenGL" "-I$(QT_IncludePath)\QtWidgets" "-I$(QT_IncludePath)\QtGui" "-I$(QT_IncludePath)\QtANGLE" "-I$(QT_IncludePath)\QtXml" "-I$(QT_IncludePath)\QtCore" "-I.\release" "-I$(OpenMesh_IncludePath)\." "-I$(QGLViewer_IncludePath)\."</Command>
