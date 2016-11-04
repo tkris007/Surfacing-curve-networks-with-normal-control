@@ -256,7 +256,5 @@ paket-files/
 .hg*
 
 PropertySheet.props
-/*.props
-
 *.sln
 *.vcxproj*

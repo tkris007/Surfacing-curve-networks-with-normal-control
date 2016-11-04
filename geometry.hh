@@ -131,6 +131,7 @@ public:
 	// Other
 	double arcLength ( double from, double to ) const;
 	std::vector<Vector3D> getControlPoints();
+	std::vector<Vector3D> getControlPoints() const;
 	size_t getDegree();
 
 private:

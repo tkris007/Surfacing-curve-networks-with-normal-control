@@ -17,6 +17,7 @@
 #endif
 
 using qglviewer::Vec;
+using Geometry::Vector3D;
 
 MyViewer::MyViewer ( QWidget *parent ) :
 	QGLViewer ( parent ),
@@ -221,74 +222,31 @@ void MyViewer::meanMapColor ( double d, double *color ) const
 	}
 }
 
-//bool MyViewer::openBezier ( std::string const &filename )
-//{
-//	size_t n, m;
-//	try
-//	{
-//		std::ifstream f ( filename.c_str() );
-//		f >> n >> m;
-//		degree[0] = n++; degree[1] = m++;
-//		control_points.resize ( n * m );
-//		for ( size_t i = 0; i < n; ++i )
-//			for ( size_t j = 0; j < m; ++j )
-//			{
-//				size_t const index = i * m + j;
-//				f >> control_points[index][0] >> control_points[index][1] >> control_points[index][2];
-//			}
-//		f.close();
-//	}
-//	catch ( std::ifstream::failure )
-//	{
-//		return false;
-//	}
-//
-//	generateMesh();
-//	mesh.request_face_normals(); mesh.request_vertex_normals();
-//	mesh.update_face_normals();  mesh.update_vertex_normals();
-//
-//	updateMeanCurvature();
-//
-//	// Set camera on the model
-//	MyMesh::Point box_min, box_max;
-//	box_min = box_max = mesh.point ( *mesh.vertices_begin() );
-//	for ( MyMesh::ConstVertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
-//	{
-//		box_min.minimize ( mesh.point ( *i ) );
-//		box_max.maximize ( mesh.point ( *i ) );
-//	}
-//	camera()->setSceneBoundingBox ( Vec ( box_min[0], box_min[1], box_min[2] ),
-//	                                Vec ( box_max[0], box_max[1], box_max[2] ) );
-//	camera()->showEntireScene();
-//
-//	setSelectedName ( -1 );
-//	axes.shown = false;
-//
-//	updateGL();
-//	return true;
-//}
+bool MyViewer::openBezier ( std::string const &filename )
+{
+	size_t n, m;
+	try
+	{
+		std::ifstream f ( filename.c_str() );
+		f >> n >> m;
+		degree[0] = n++; degree[1] = m++;
+		control_points.resize ( n * m );
+		for ( size_t i = 0; i < n; ++i )
+			for ( size_t j = 0; j < m; ++j )
+			{
+				size_t const index = i * m + j;
+				f >> control_points[index][0] >> control_points[index][1] >> control_points[index][2];
+			}
+		f.close();
+	}
+	catch ( std::ifstream::failure )
+	{
+		return false;
+	}
 
-//bool MyViewer::saveBezier ( std::string const & filename )
-//{
-//	size_t n = degree[0], m = degree[1];
-//	try
-//	{
-//		std::ofstream f ( filename.c_str() );
-//		f << n++ << " " << m++ << std::endl;
-//		for ( size_t i = 0; i < n; ++i )
-//			for ( size_t j = 0; j < m; ++j )
-//			{
-//				size_t const index = i * m + j;
-//				f << control_points[index][0] << " " << control_points[index][1] << " " << control_points[index][2] << std::endl;
-//			}
-//		f.close();
-//		return true;
-//	}
-//	catch ( std::ofstream::failure )
-//	{
-//		return false;
-//	}
-//}
+	generateMesh();
+	mesh.request_face_normals(); mesh.request_vertex_normals();
+	mesh.update_face_normals();  mesh.update_vertex_normals();
 
 std::istringstream MyViewer::nextLine(std::ifstream &file) {
 
@@ -396,38 +354,16 @@ void MyViewer::draw()
 	if ( mesh.n_vertices() == 0 )
 	{ return; }
 
-	if ( show_control_points )
-	{
-		glDisable ( GL_LIGHTING );
-		glLineWidth ( 3.0 );
-		glColor3d ( 0.3, 0.3, 1.0 );
-		size_t const m = degree[0] + 1;
-		for ( size_t k = 0; k < 2; ++k )
-			for ( size_t i = 0; i <= degree[k]; ++i )
-			{
-				glBegin ( GL_LINE_STRIP );
-				for ( size_t j = 0; j <= degree[1 - k]; ++j )
-				{
-					size_t const index = k ? j * m + i : i * m + j;
-					Vec const &p = control_points[index];
-					glVertex3d ( p[0], p[1], p[2] );
-				}
-				glEnd();
-			}
-			glLineWidth ( 1.0 );
-			glPointSize ( 8.0 );
-			glColor3d ( 1.0, 0.0, 1.0 );
-			glBegin ( GL_POINTS );
-			for ( size_t i = 0, ie = control_points.size(); i < ie; ++i )
-			{
-				Vec const &p = control_points[i];
-				glVertex3d ( p[0], p[1], p[2] );
-			}
-			glEnd();
-			glPointSize ( 1.0 );
-			glEnable ( GL_LIGHTING );
-	}
+	if ( show_curves )
+	{ drawCurves(); }
 
+	if ( show_control_points )
+	{drawControlPoints();	}
+
+	if ( show_normals )
+	{
+		drawNormals();
+	}
 	if ( !show_solid && show_wireframe )
 	{ glPolygonMode ( GL_FRONT_AND_BACK, GL_LINE ); }
 	else
@@ -494,6 +430,98 @@ void MyViewer::draw()
 	{ drawAxes(); }
 }
 
+void MyViewer::drawCurves() const
+{
+	glDisable ( GL_LIGHTING );
+	glLineWidth ( 3.0 );
+	glColor3d ( 0.3, 0.3, 1.0 );
+
+	for ( size_t i = 0; i < bsCurves.size(); ++i )
+		for ( float t = 0; t < 1; t += 0.01f )
+		{
+			glBegin ( GL_LINE_STRIP );
+
+
+			Vector3D const &p = bsCurves[i]->eval ( t );
+			glVertex3d ( p[0], p[1], p[2] );
+
+			glEnd();
+		}
+	glLineWidth ( 1.0 );
+	glEnable ( GL_LIGHTING );
+}
+
+void MyViewer::drawControlPoints() const
+{
+	glLineWidth ( 1.0 );
+	glPointSize ( 8.0 );
+	glColor3d ( 1.0, 0.0, 1.0 );
+	glBegin ( GL_POINTS );
+	for ( size_t i = 0; i < bsCurves.size(); ++i )
+	{
+		std::vector<Vector3D> controlPoints = bsCurves[i]->getControlPoints();
+		size_t numberOfControlPoints = controlPoints.size();
+		for ( size_t k = 0; k < numberOfControlPoints; ++k )
+		{
+			Vector3D const &p = controlPoints[k];
+			glVertex3d ( p[0], p[1], p[2] );
+		}
+
+	}
+	glEnd();
+	glPointSize ( 1.0 );
+	glEnable ( GL_LIGHTING );
+}
+
+void MyViewer::drawNormals() const
+{
+	Transfinite::RMF rmf;
+
+	for ( size_t i = 0; i < bsCurves.size(); ++i )
+	{
+		rmf.setCurve ( bsCurves[i] );
+		std::vector<Geometry::Vector3D> derstart1;
+		std::vector<Geometry::Vector3D> derstart2;
+		std::vector<Geometry::Vector3D> derend1;
+		std::vector<Geometry::Vector3D> derend2;
+		if ( i == 0 )
+		{
+			bsCurves[0]->eval ( 0, 1, derstart1 );
+			bsCurves[bsCurves.size() - 1]->eval ( 1, 1, derstart2 );
+
+			bsCurves[0]->eval ( 1, 1, derend1 );
+			bsCurves[1]->eval ( 0, 1, derend2 );
+		}
+		else if ( i == bsCurves.size() - 1 )
+		{
+			bsCurves[bsCurves.size() - 1]->eval ( 0, 1, derstart1 );
+			bsCurves[bsCurves.size() - 2]->eval ( 1, 1, derstart2 );
+
+			bsCurves[bsCurves.size() - 1]->eval ( 1, 1, derend1 );
+			bsCurves[0]->eval ( 0, 1, derend2 );
+		}
+		else
+		{
+			bsCurves[i]->eval ( 0, 1, derstart1 );
+			bsCurves[i - 1]->eval ( 1, 1, derstart2 );
+
+			bsCurves[i]->eval ( 1, 1, derend1 );
+			bsCurves[i + 1]->eval ( 0, 1, derend2 );
+		}
+		rmf.setStart ( ( derstart1[1] ^ derstart2[1] ).normalize() );
+		rmf.setEnd ( ( derend1[1] ^ derend2[1] ).normalize() );
+		for ( float t = 0; t < 1; t += 0.1f )
+		{
+			Vec const &arrowEndPoint = Vec ( rmf.eval ( t ) );
+			Vec const &arrowStartPoint = Vec ( bsCurves[i]->eval ( t ) );
+			glColor3f ( 1.0, 0.0, 0.0 );
+			drawArrow ( arrowStartPoint, ( arrowStartPoint + arrowEndPoint ) * 10, ( ( arrowStartPoint + arrowEndPoint ) * 10 ).norm() / 50.0 );
+
+			glEnd();
+		}
+	}
+}
+
 void MyViewer::drawAxes() const
 {
 	Vec const p ( axes.position[0], axes.position[1], axes.position[2] );
@@ -514,13 +542,17 @@ void MyViewer::drawWithNames()
 	{
 		if ( !show_control_points )
 		{ return; }
-
-		for ( size_t i = 0, ie = control_points.size(); i < ie; ++i )
+		for ( size_t i = 0; i < bsCurves.size(); ++i )
 		{
-			Vec const &p = control_points[i];
-			glPushName ( static_cast<GLuint> ( i ) );
-			glRasterPos3f ( p[0], p[1], p[2] );
-			glPopName();
+			std::vector<Vector3D> controlPoints = bsCurves[i]->getControlPoints();
+			size_t numberOfControlPoints = controlPoints.size();
+			for ( size_t k = 0; k < numberOfControlPoints; ++k )
+			{
+				Vector3D const &p = controlPoints[k];
+				glPushName ( static_cast<GLuint> ( i * 1000 + k ) );
+				glRasterPos3f ( p[0], p[1], p[2] );
+				glPopName();
+			}
 		}
 	}
 }
@@ -539,7 +571,7 @@ void MyViewer::drawAxesWithNames() const
 	glPopName();
 }
 
-void MyViewer::postSelection ( const QPoint &p )
+void MyViewer::postSelection ( const QPoint & p )
 {
 	int sel = selectedName();
 	if ( sel == -1 )
@@ -562,9 +594,9 @@ void MyViewer::postSelection ( const QPoint &p )
 	else
 	{
 		selected = sel;
-		axes.position[0] = control_points[sel][0];
-		axes.position[1] = control_points[sel][1];
-		axes.position[2] = control_points[sel][2];
+		axes.position[0] = bsCurves[sel / 1000]->getControlPoints() [sel % 1000][0];
+		axes.position[1] = bsCurves[sel / 1000]->getControlPoints() [sel % 1000][1];
+		axes.position[2] = bsCurves[sel / 1000]->getControlPoints() [sel % 1000][2];
 		Vec const pos ( axes.position[0], axes.position[1], axes.position[2] );
 		double const depth = camera()->projectedCoordinatesOf ( pos ) [2];
 		Vec const q1 = camera()->unprojectedCoordinatesOf ( Vec ( 0.0, 0.0, depth ) );
@@ -575,7 +607,7 @@ void MyViewer::postSelection ( const QPoint &p )
 	}
 }
 
-void MyViewer::keyPressEvent ( QKeyEvent *e )
+void MyViewer::keyPressEvent ( QKeyEvent * e )
 {
 	if ( e->modifiers() == Qt::NoModifier )
 		switch ( e->key() )
@@ -605,7 +637,15 @@ void MyViewer::keyPressEvent ( QKeyEvent *e )
 			updateGL();
 			break;
 		case Qt::Key_E:
-			increaseDegree();
+			//increaseDegree();
+			updateGL();
+			break;
+		case Qt::Key_N:
+			show_normals = !show_normals;
+			updateGL();
+			break;
+		case Qt::Key_B:
+			show_curves = !show_curves;
 			updateGL();
 			break;
 		default:
@@ -615,48 +655,48 @@ void MyViewer::keyPressEvent ( QKeyEvent *e )
 	{ QGLViewer::keyPressEvent ( e ); }
 }
 
-void MyViewer::increaseDegree()
-{
-	size_t n = degree[0] + 2, m = degree[1] + 1;
-	++degree[0];
-	++degree[1];
-	std::vector<qglviewer::Vec> tmpControlPoints = control_points;
-	control_points.resize ( ( n ) * ( m  ) );
-	tmpControlPoints.resize ( ( n  ) * ( m  ) );
+//void MyViewer::increaseDegree()
+//{
+//	size_t n = degree[0] + 2, m = degree[1] + 1;
+//	++degree[0];
+//	++degree[1];
+//	std::vector<qglviewer::Vec> tmpControlPoints = control_points;
+//	control_points.resize ( ( n ) * ( m  ) );
+//	tmpControlPoints.resize ( ( n  ) * ( m  ) );
+//
+//	for ( size_t j = 0; j < m; ++j )
+//	{
+//		control_points[j] = tmpControlPoints[j];
+//		for ( size_t i = 1; i < n - 1; ++i )
+//		{
+//			size_t const index = i * m + j;
+//			control_points[index] = tmpControlPoints[index - m] + ( tmpControlPoints[index] - tmpControlPoints[index - m] ) / n * ( n - i );
+//		}
+//		control_points[ ( n - 1 ) *m + j] = tmpControlPoints[ ( n - 2 ) * m + j];
+//
+//	}
+//	tmpControlPoints = control_points;
+//	++m;
+//	control_points.resize ( n * m );
+//	for ( size_t i = 0; i < n; ++i )
+//	{
+//		control_points[i * m] = tmpControlPoints[i * ( m - 1 )];
+//		for ( size_t j = 1; j < m - 1; ++j )
+//		{
+//			size_t const index = i * m + j;
+//			control_points[index] = tmpControlPoints[i * ( m - 1 ) + j - 1] + ( tmpControlPoints[i * ( m - 1 ) + j] - tmpControlPoints[i * ( m - 1 ) + j - 1] ) / m * ( m - j );
+//		}
+//		control_points[ ( i + 1 ) *m - 1] = tmpControlPoints[ ( i + 1 ) * ( m - 1 ) - 1];
+//	}
+//
+//	generateMesh();
+//	mesh.request_face_normals(); mesh.request_vertex_normals();
+//	mesh.update_face_normals();  mesh.update_vertex_normals();
+//
+//	updateMeanCurvature();
+//}
 
-	for ( size_t j = 0; j < m; ++j )
-	{
-		control_points[j] = tmpControlPoints[j];
-		for ( size_t i = 1; i < n - 1; ++i )
-		{
-			size_t const index = i * m + j;
-			control_points[index] = tmpControlPoints[index - m] + ( tmpControlPoints[index] - tmpControlPoints[index - m] ) / n * ( n - i );
-		}
-		control_points[ ( n - 1 ) *m + j] = tmpControlPoints[ ( n - 2 ) * m + j];
-
-	}
-	tmpControlPoints = control_points;
-	++m;
-	control_points.resize ( n * m );
-	for ( size_t i = 0; i < n; ++i )
-	{
-		control_points[i * m] = tmpControlPoints[i * ( m - 1 )];
-		for ( size_t j = 1; j < m - 1; ++j )
-		{
-			size_t const index = i * m + j;
-			control_points[index] = tmpControlPoints[i * ( m - 1 ) + j - 1] + ( tmpControlPoints[i * ( m - 1 ) + j] - tmpControlPoints[i * ( m - 1 ) + j - 1] ) / m * ( m - j );
-		}
-		control_points[ ( i + 1 ) *m - 1] = tmpControlPoints[ ( i + 1 ) * ( m - 1 ) - 1];
-	}
-
-	generateMesh();
-	mesh.request_face_normals(); mesh.request_vertex_normals();
-	mesh.update_face_normals();  mesh.update_vertex_normals();
-
-	updateMeanCurvature();
-}
-
-Vec MyViewer::intersectLines ( Vec const &ap, Vec const &ad, Vec const &bp, Vec const &bd ) const
+Vec MyViewer::intersectLines ( Vec const & ap, Vec const & ad, Vec const & bp, Vec const & bd ) const
 {
 	// always returns a point on the (ap, ad) line
 	double a = ad * ad, b = ad * bd, c = bd * bd;
@@ -730,7 +770,7 @@ void MyViewer::generateMesh()
 		}
 }
 
-void MyViewer::mouseMoveEvent ( QMouseEvent *e )
+void MyViewer::mouseMoveEvent ( QMouseEvent * e )
 {
 	if ( axes.shown && axes.selected_axis >= 0 &&
 		e->modifiers() & Qt::ShiftModifier && e->buttons() & Qt::LeftButton )
@@ -741,11 +781,13 @@ void MyViewer::mouseMoveEvent ( QMouseEvent *e )
 		Vec p = intersectLines ( axes.grabbed_pos, axis, from, dir );
 		float d = ( p - axes.grabbed_pos ) * axis;
 		axes.position[axes.selected_axis] = axes.original_pos[axes.selected_axis] + d;
-		control_points[selected] = Vec ( axes.position[0], axes.position[1], axes.position[2] );
-		generateMesh();
-		mesh.request_face_normals(); mesh.request_vertex_normals();
-		mesh.update_face_normals();  mesh.update_vertex_normals();
-		updateMeanCurvature();
+		bsCurves[selected / 1000]->getControlPoints() [selected % 1000][0] = Vec ( axes.position[0], axes.position[1], axes.position[2] ) [0];
+		bsCurves[selected / 1000]->getControlPoints() [selected % 1000][1] = Vec ( axes.position[0], axes.position[1], axes.position[2] ) [1];
+		bsCurves[selected / 1000]->getControlPoints() [selected % 1000][2] = Vec ( axes.position[0], axes.position[1], axes.position[2] ) [2];
+		/*	generateMesh();
+			mesh.request_face_normals(); mesh.request_vertex_normals();
+			mesh.update_face_normals();  mesh.update_vertex_normals();
+			updateMeanCurvature();*/
 		updateGL();
 	}
 	else
@@ -784,3 +826,5 @@ QString MyViewer::helpString() const
 		"<p align=\"right\">Peter Salvi</p>" );
 	return text;
 }
+
+

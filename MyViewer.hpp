@@ -30,6 +30,8 @@ void MyViewer::setMeanMax ( double max )
 	mean_max = max;
 }
 
+
+
 MyViewer::Vector MyViewer::halfedgeVector ( MyMesh::HalfedgeHandle const &h ) const
 {
 	return mesh.point ( mesh.to_vertex_handle ( h ) ) - mesh.point ( mesh.from_vertex_handle ( h ) );

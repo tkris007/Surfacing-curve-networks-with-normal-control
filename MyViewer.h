@@ -4,7 +4,7 @@
 
 #include <QGLViewer/qglviewer.h>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
-#include "geometry.hh"
+#include "rmf.hh"
 
 using qglviewer::Vec;
 
@@ -26,7 +26,7 @@ public:
 	bool openBSpline ( std::string const &filename );
 	bool saveBSpline ( std::string const& filename );
 
-	void increaseDegree();
+	//void increaseDegree();
 
 
 signals:
@@ -67,6 +67,9 @@ private:
 	void meanMapColor ( double d, double *color ) const;
 	void drawAxes() const;
 	void drawAxesWithNames() const;
+	void drawCurves() const;
+	void drawControlPoints() const;
+	void drawNormals() const;
 	Vec intersectLines ( Vec const &ap, Vec const &ad, Vec const &bp, Vec const &bd ) const;
 	static void bernsteinAll ( size_t n, double u, std::vector<double> &coeff );
 	void generateMesh();
@@ -74,11 +77,12 @@ private:
 	size_t degree[2];
 	std::vector<Vec> control_points;
 
-	std::vector<Geometry::BSCurve> bsCurves;
+	std::vector<std::shared_ptr<Geometry::BSCurve>> bsCurves;
 	MyMesh mesh;
 	double mean_min, mean_max;
 	double cutoff_ratio;
-	bool show_control_points, show_solid, show_wireframe;
+	bool show_control_points, show_solid, show_wireframe, show_curves, show_normals;
+
 	enum { COLOR_PLAIN, COLOR_MEAN, COLOR_ISOPHOTES } coloring;
 	GLuint isophote_texture;
 	size_t selected;

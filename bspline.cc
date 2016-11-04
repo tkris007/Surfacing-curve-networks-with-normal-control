@@ -185,6 +185,10 @@ std::vector<Vector3D> BSCurve::getControlPoints()
 {
 	return cp_;
 }
+std::vector<Vector3D> BSCurve::getControlPoints() const
+{
+	return cp_;
+}
 
 size_t BSCurve::getDegree()
 {
