@@ -5,6 +5,7 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <cctype>
 #include <QDebug>
 
 #include <QtGui/QKeyEvent>
@@ -224,7 +225,7 @@ void MyViewer::meanMapColor ( double d, double *color ) const
 	}
 }
 
-std::istringstream MyViewer::nextLine ( std::ifstream &file )
+std::stringstream MyViewer::nextLine ( std::ifstream &file )
 {
 
 	std::string line;
@@ -235,7 +236,7 @@ std::istringstream MyViewer::nextLine ( std::ifstream &file )
 
 		std::getline ( file, line );
 	}
-	std::istringstream ss ( line );
+	std::stringstream ss ( line );
 
 	QString qstr = QString::fromStdString ( line );
 	qDebug() << qstr;
@@ -248,13 +249,14 @@ void MyViewer::readBSCurve ( std::ifstream &file )
 
 	// Read degree
 	int degree;
-	nextLine ( file ) >> degree;
+	std::stringstream ss =  nextLine ( file );
+	ss >> degree;
 
 	// Read knots
 	std::vector<double> knots;
 	int numberOfKnots;
-	nextLine ( file ) >> numberOfKnots;
-	std::istringstream ss = nextLine ( file );
+	ss = nextLine ( file );
+	ss >> numberOfKnots;
 	for ( int i = 0; i < numberOfKnots; i++ )
 	{
 
@@ -266,10 +268,10 @@ void MyViewer::readBSCurve ( std::ifstream &file )
 	// Read control points
 	std::vector<Geometry::Vector3D> cpts;
 	int numberOfCpts;
-	nextLine ( file ) >> numberOfCpts;
+	ss = nextLine ( file );
+	ss >> numberOfCpts;
 	for ( int i = 0; i < numberOfCpts; i++ )
 	{
-		std::istringstream ss = nextLine ( file );
 		double x;
 		ss >> x;
 		double y;
@@ -282,6 +284,7 @@ void MyViewer::readBSCurve ( std::ifstream &file )
 	// Create new BSCurve and add it to bsCurves
 	std::shared_ptr<Geometry::BSCurve> p_BSCurve ( new Geometry::BSCurve ( degree, knots, cpts ) );
 	p_BSCurve->normalize();
+	//p_BSCurve->reverse();
 	bsCurves.push_back ( p_BSCurve );
 
 }
@@ -296,8 +299,6 @@ bool MyViewer::openBSpline ( std::string const &filename )
 		{
 			int numberOfCurves;
 			nextLine ( file ) >>  numberOfCurves;
-			// ... you now get a number ...
-			qDebug() << numberOfCurves;
 
 			for ( int i = 0; i < numberOfCurves; i++ )
 			{

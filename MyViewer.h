@@ -97,22 +97,10 @@ private:
 	/**
 	 * Returns the next line from file as a stringstream
 	 */
-	std::istringstream nextLine(std::ifstream &file);
+	std::stringstream nextLine(std::ifstream &file);
 
 	/** 
 	 * Reads 1 curve from file (file input stream)
-	 *
-	 * Format must be as follows:
-	 *
-	 * 3                   # degree
-	 * 9                   # length of knots (vector)
-	 * 0 0 0 0 0.5 1 1 1 1 # data in knots
-	 * 5                   # number of control points (cpts)
-	 * 0 0 1               # coordinates of 1st control point (cpts[0])
-	 * 0 0 2               # coordinates of 2nd control point (cpts[1])
-	 * 0 2 1               # ...
-	 * 2 0 1               # 
-	 * 2 2 1               # coordinates of last control point
 	 */
 	void readBSCurve(std::ifstream &file);
 };
