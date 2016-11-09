@@ -96,9 +96,9 @@ private:
 	} axes;
 
 	/**
-	 * Returns the next line from file as a stringstream
+	 * Returns the next line from file as a string
 	 */
-	std::stringstream nextLine ( std::ifstream &file );
+	std::string nextLine ( std::ifstream &file );
 
 	/**
 	 * Reads 1 curve from file (file input stream)

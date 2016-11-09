@@ -225,7 +225,7 @@ void MyViewer::meanMapColor ( double d, double *color ) const
 	}
 }
 
-std::stringstream MyViewer::nextLine ( std::ifstream &file )
+std::string MyViewer::nextLine ( std::ifstream &file )
 {
 
 	std::string line;
@@ -236,12 +236,11 @@ std::stringstream MyViewer::nextLine ( std::ifstream &file )
 
 		std::getline ( file, line );
 	}
-	std::stringstream ss ( line );
 
 	QString qstr = QString::fromStdString ( line );
 	qDebug() << qstr;
 
-	return ss;
+	return line;
 }
 
 void MyViewer::readBSCurve ( std::ifstream &file )
@@ -249,13 +248,13 @@ void MyViewer::readBSCurve ( std::ifstream &file )
 
 	// Read degree
 	int degree;
-	std::stringstream ss =  nextLine ( file );
+	std::stringstream ss(nextLine(file));
 	ss >> degree;
 
 	// Read knots
 	std::vector<double> knots;
 	int numberOfKnots;
-	ss = nextLine ( file );
+	ss.str(nextLine(file));
 	ss >> numberOfKnots;
 	for ( int i = 0; i < numberOfKnots; i++ )
 	{
@@ -268,7 +267,7 @@ void MyViewer::readBSCurve ( std::ifstream &file )
 	// Read control points
 	std::vector<Geometry::Vector3D> cpts;
 	int numberOfCpts;
-	ss = nextLine ( file );
+	ss.str(nextLine(file));
 	ss >> numberOfCpts;
 	for ( int i = 0; i < numberOfCpts; i++ )
 	{
@@ -298,7 +297,7 @@ bool MyViewer::openBSpline ( std::string const &filename )
 		if ( file.good() )
 		{
 			int numberOfCurves;
-			nextLine ( file ) >>  numberOfCurves;
+                        std::stringstream(nextLine(file)) >>  numberOfCurves;
 
 			for ( int i = 0; i < numberOfCurves; i++ )
 			{
@@ -529,7 +528,7 @@ void MyViewer::drawNormals() const
 
 			Vector3D p1 = rmf.eval ( t ) ;
 			Vector3D p2 = bsCurves[i]->eval ( t );
-			Vec  &arrowEndPoint = Vec ( p1[0], p1[1], p1[2] );
+			Vec  arrowEndPoint = Vec ( p1[0], p1[1], p1[2] );
 			//arrowEndPoint.normalize();
 			Vec const &arrowStartPoint = Vec ( p2[0], p2[1], p2[2] );
 
