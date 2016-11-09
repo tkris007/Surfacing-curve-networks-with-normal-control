@@ -22,7 +22,7 @@ using Geometry::Vector3D;
 
 MyViewer::MyViewer ( QWidget *parent ) :
 	QGLViewer ( parent ),
-	mean_min ( 0.0 ), mean_max ( 0.0 ), cutoff_ratio ( 0.05 ),
+	mean_min ( 0.0 ), mean_max ( 0.0 ), cutoff_ratio ( 0.05 ), normalSize ( 10 ),
 	show_control_points ( true ), show_solid ( true ), show_wireframe ( false ),
 	show_curves ( true ), show_normals ( false ),
 	coloring ( COLOR_PLAIN )
@@ -315,8 +315,8 @@ bool MyViewer::openBSpline ( std::string const &filename )
 		}
 		camera()->setSceneBoundingBox ( Vec ( box_min[0], box_min[1], box_min[2] ),
 		Vec ( box_max[0], box_max[1], box_max[2] ) );*/
-		camera()->setSceneBoundingBox ( Vec ( -10, -10, -10 ),
-		                                Vec ( 10, 10, 10 ) );
+		camera()->setSceneBoundingBox ( Vec ( -150, -150, -150 ),
+		                                Vec ( 150, 150, 150 ) );
 		camera()->showEntireScene();
 		/*camera()->setSceneCenter ( Vec ( -0, -0, -0 ) );
 		camera()->setSceneRadius ( 250 );
@@ -522,7 +522,7 @@ void MyViewer::drawNormals() const
 
 		}
 		rmf.setStart ( ( derstart1[1] ^ derstart2[1] ).normalize() );
-		rmf.setEnd ( ( derend1[1] ^ derend2[1] ).normalize() );
+		rmf.setEnd ( - ( derend1[1] ^ derend2[1] ).normalize() );
 		rmf.update();
 		for ( float t = 0.01f; t < 1; t += 0.1f )
 		{
@@ -534,7 +534,7 @@ void MyViewer::drawNormals() const
 			Vec const &arrowStartPoint = Vec ( p2[0], p2[1], p2[2] );
 
 			glColor3f ( 1.0, 0.0, 0.0 );
-			drawArrow ( arrowStartPoint, ( arrowStartPoint + arrowEndPoint ) , 0.03 );
+			drawArrow ( arrowStartPoint, ( arrowStartPoint + arrowEndPoint * normalSize ) , normalSize / 50.0 );
 
 			glEnd();
 
@@ -571,7 +571,6 @@ void MyViewer::drawWithNames()
 			for ( size_t k = 0; k < numberOfControlPoints; ++k )
 			{
 				Vector3D const &p = controlPoints[k];
-				qDebug() << i << " " << k << " " << i * 1000 + k;
 				glPushName ( static_cast<GLuint> ( i * 1000 + k ) );
 				glRasterPos3f ( p[0], p[1], p[2] );
 				glPopName();
@@ -618,13 +617,13 @@ void MyViewer::postSelection ( const QPoint & p )
 	}
 	else
 	{
-		qDebug() << sel;
+
 		selected = sel;
 		axes.position[0] = bsCurves[sel / 1000]->getControlPoints() [sel % 1000][0];
 		axes.position[1] = bsCurves[sel / 1000]->getControlPoints() [sel % 1000][1];
 		axes.position[2] = bsCurves[sel / 1000]->getControlPoints() [sel % 1000][2];
 		Vec const pos ( axes.position[0], axes.position[1], axes.position[2] );
-		qDebug() << pos.x << " " << pos.y << " " << pos.z;
+
 		double const depth = camera()->projectedCoordinatesOf ( pos ) [2];
 		Vec const q1 = camera()->unprojectedCoordinatesOf ( Vec ( 0.0, 0.0, depth ) );
 		Vec const q2 = camera()->unprojectedCoordinatesOf ( Vec ( width(), height(), depth ) );
@@ -675,6 +674,15 @@ void MyViewer::keyPressEvent ( QKeyEvent * e )
 			show_curves = !show_curves;
 			updateGL();
 			break;
+		case Qt::Key_8:
+			normalSize += 0.5;
+			updateGL();
+			break;
+		case  Qt::Key_9:
+			normalSize -= 0.5;
+			updateGL();
+			break;
+
 		default:
 			QGLViewer::keyPressEvent ( e );
 		}

@@ -85,6 +85,7 @@ private:
 	enum { COLOR_PLAIN, COLOR_MEAN, COLOR_ISOPHOTES } coloring;
 	GLuint isophote_texture;
 	size_t selected;
+	float normalSize;
 	struct ModificationAxes
 	{
 		bool shown;
@@ -97,12 +98,12 @@ private:
 	/**
 	 * Returns the next line from file as a stringstream
 	 */
-	std::stringstream nextLine(std::ifstream &file);
+	std::stringstream nextLine ( std::ifstream &file );
 
-	/** 
+	/**
 	 * Reads 1 curve from file (file input stream)
 	 */
-	void readBSCurve(std::ifstream &file);
+	void readBSCurve ( std::ifstream &file );
 };
 
 #include "MyViewer.hpp"
