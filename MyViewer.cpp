@@ -293,7 +293,7 @@ bool MyViewer::openBSpline ( std::string const &filename )
 {
 	try
 	{
-
+		bsCurves.clear();
 		std::ifstream file ( filename.c_str() );
 		if ( file.good() )
 		{
@@ -306,6 +306,26 @@ bool MyViewer::openBSpline ( std::string const &filename )
 			}
 		}
 		file.close();
+		/*MyMesh::Point box_min, box_max;
+		box_min = box_max = mesh.point ( *mesh.vertices_begin() );
+		for ( MyMesh::ConstVertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
+		{
+		box_min.minimize ( mesh.point ( *i ) );
+		box_max.maximize ( mesh.point ( *i ) );
+		}
+		camera()->setSceneBoundingBox ( Vec ( box_min[0], box_min[1], box_min[2] ),
+		Vec ( box_max[0], box_max[1], box_max[2] ) );*/
+		camera()->setSceneBoundingBox ( Vec ( -10, -10, -10 ),
+		                                Vec ( 10, 10, 10 ) );
+		camera()->showEntireScene();
+		/*camera()->setSceneCenter ( Vec ( -0, -0, -0 ) );
+		camera()->setSceneRadius ( 250 );
+		camera()->showEntireScene();*/
+
+		setSelectedName ( -1 );
+		axes.shown = false;
+
+		updateGL();
 		return true;
 	}
 	catch ( std::ifstream::failure )
@@ -313,14 +333,8 @@ bool MyViewer::openBSpline ( std::string const &filename )
 
 		return false;
 	}
-	camera()->setSceneCenter ( Vec ( -5, -0, -5 ) );
-	camera()->setSceneRadius ( 50 );
-	camera()->showEntireScene();
 
-	setSelectedName ( -1 );
-	axes.shown = false;
 
-	updateGL();
 }
 
 bool MyViewer::saveBSpline ( std::string const& filename )
@@ -509,15 +523,18 @@ void MyViewer::drawNormals() const
 		}
 		rmf.setStart ( ( derstart1[1] ^ derstart2[1] ).normalize() );
 		rmf.setEnd ( ( derend1[1] ^ derend2[1] ).normalize() );
-
-		for ( float t = 0.01; t < 1; t += 0.1f )
+		rmf.update();
+		for ( float t = 0.01f; t < 1; t += 0.1f )
 		{
-			Vec const &arrowEndPoint = Vec ( rmf.eval ( t ) ); // a normalvektor sopres ezen a soron elszall.
 
-			Vec const &arrowStartPoint = Vec ( bsCurves[i]->eval ( t ) );
+			Vector3D p1 = rmf.eval ( t ) ;
+			Vector3D p2 = bsCurves[i]->eval ( t );
+			Vec  &arrowEndPoint = Vec ( p1[0], p1[1], p1[2] );
+			//arrowEndPoint.normalize();
+			Vec const &arrowStartPoint = Vec ( p2[0], p2[1], p2[2] );
 
 			glColor3f ( 1.0, 0.0, 0.0 );
-			drawArrow ( arrowStartPoint, ( arrowStartPoint + arrowEndPoint ) * 10, ( ( arrowStartPoint + arrowEndPoint ) * 10 ).norm() / 50.0 );
+			drawArrow ( arrowStartPoint, ( arrowStartPoint + arrowEndPoint ) , 0.03 );
 
 			glEnd();
 
@@ -528,7 +545,6 @@ void MyViewer::drawNormals() const
 
 void MyViewer::drawAxes() const
 {
-
 	Vec const p ( axes.position[0], axes.position[1], axes.position[2] );
 	glColor3f ( 1.0, 0.0, 0.0 );
 	drawArrow ( p, p + Vec ( axes.size, 0.0, 0.0 ), axes.size / 50.0 );
@@ -541,6 +557,7 @@ void MyViewer::drawAxes() const
 
 void MyViewer::drawWithNames()
 {
+
 	if ( axes.shown )
 	{ drawAxesWithNames(); }
 	else
@@ -554,6 +571,7 @@ void MyViewer::drawWithNames()
 			for ( size_t k = 0; k < numberOfControlPoints; ++k )
 			{
 				Vector3D const &p = controlPoints[k];
+				qDebug() << i << " " << k << " " << i * 1000 + k;
 				glPushName ( static_cast<GLuint> ( i * 1000 + k ) );
 				glRasterPos3f ( p[0], p[1], p[2] );
 				glPopName();
@@ -564,6 +582,7 @@ void MyViewer::drawWithNames()
 
 void MyViewer::drawAxesWithNames() const
 {
+
 	Vec const p ( axes.position[0], axes.position[1], axes.position[2] );
 	glPushName ( 0 );
 	drawArrow ( p, p + Vec ( axes.size, 0.0, 0.0 ), axes.size / 50.0 );
@@ -578,6 +597,7 @@ void MyViewer::drawAxesWithNames() const
 
 void MyViewer::postSelection ( const QPoint & p )
 {
+
 	int sel = selectedName();
 	if ( sel == -1 )
 	{
@@ -598,11 +618,13 @@ void MyViewer::postSelection ( const QPoint & p )
 	}
 	else
 	{
+		qDebug() << sel;
 		selected = sel;
 		axes.position[0] = bsCurves[sel / 1000]->getControlPoints() [sel % 1000][0];
 		axes.position[1] = bsCurves[sel / 1000]->getControlPoints() [sel % 1000][1];
 		axes.position[2] = bsCurves[sel / 1000]->getControlPoints() [sel % 1000][2];
 		Vec const pos ( axes.position[0], axes.position[1], axes.position[2] );
+		qDebug() << pos.x << " " << pos.y << " " << pos.z;
 		double const depth = camera()->projectedCoordinatesOf ( pos ) [2];
 		Vec const q1 = camera()->unprojectedCoordinatesOf ( Vec ( 0.0, 0.0, depth ) );
 		Vec const q2 = camera()->unprojectedCoordinatesOf ( Vec ( width(), height(), depth ) );
@@ -780,12 +802,14 @@ void MyViewer::mouseMoveEvent ( QMouseEvent * e )
 	if ( axes.shown && axes.selected_axis >= 0 &&
 	        e->modifiers() & Qt::ShiftModifier && e->buttons() & Qt::LeftButton )
 	{
+
 		Vec axis = Vec ( axes.selected_axis == 0, axes.selected_axis == 1, axes.selected_axis == 2 );
 		Vec from, dir;
 		camera()->convertClickToLine ( e->pos(), from, dir );
 		Vec p = intersectLines ( axes.grabbed_pos, axis, from, dir );
 		float d = ( p - axes.grabbed_pos ) * axis;
 		axes.position[axes.selected_axis] = axes.original_pos[axes.selected_axis] + d;
+
 		bsCurves[selected / 1000]->getControlPoints() [selected % 1000][0] = Vec ( axes.position[0], axes.position[1], axes.position[2] ) [0];
 		bsCurves[selected / 1000]->getControlPoints() [selected % 1000][1] = Vec ( axes.position[0], axes.position[1], axes.position[2] ) [1];
 		bsCurves[selected / 1000]->getControlPoints() [selected % 1000][2] = Vec ( axes.position[0], axes.position[1], axes.position[2] ) [2];
