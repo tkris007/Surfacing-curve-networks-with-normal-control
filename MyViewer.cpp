@@ -30,6 +30,7 @@ MyViewer::MyViewer ( QWidget *parent ) :
 	setSelectRegionWidth ( 10 );
 	setSelectRegionHeight ( 10 );
 	axes.shown = false;
+	step = 0.01f;
 }
 
 MyViewer::~MyViewer()
@@ -248,13 +249,14 @@ void MyViewer::readBSCurve ( std::ifstream &file )
 
 	// Read degree
 	int degree;
-	std::stringstream ss(nextLine(file));
+	std::stringstream ss ( nextLine ( file ) );
 	ss >> degree;
 
 	// Read knots
 	std::vector<double> knots;
 	int numberOfKnots;
-	ss.str(nextLine(file));
+	ss.str ( nextLine ( file ) );
+	ss.seekg ( 0 );
 	ss >> numberOfKnots;
 	for ( int i = 0; i < numberOfKnots; i++ )
 	{
@@ -267,7 +269,8 @@ void MyViewer::readBSCurve ( std::ifstream &file )
 	// Read control points
 	std::vector<Geometry::Vector3D> cpts;
 	int numberOfCpts;
-	ss.str(nextLine(file));
+	ss.str ( nextLine ( file ) );
+	ss.seekg ( 0 );
 	ss >> numberOfCpts;
 	for ( int i = 0; i < numberOfCpts; i++ )
 	{
@@ -297,7 +300,7 @@ bool MyViewer::openBSpline ( std::string const &filename )
 		if ( file.good() )
 		{
 			int numberOfCurves;
-                        std::stringstream(nextLine(file)) >>  numberOfCurves;
+			std::stringstream ( nextLine ( file ) ) >>  numberOfCurves;
 
 			for ( int i = 0; i < numberOfCurves; i++ )
 			{
@@ -305,6 +308,8 @@ bool MyViewer::openBSpline ( std::string const &filename )
 			}
 		}
 		file.close();
+
+		calculatePlain();
 		/*MyMesh::Point box_min, box_max;
 		box_min = box_max = mesh.point ( *mesh.vertices_begin() );
 		for ( MyMesh::ConstVertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
@@ -446,7 +451,7 @@ void MyViewer::drawCurves() const
 	glColor3d ( 0.3, 0.3, 1.0 );
 	glBegin ( GL_LINE_STRIP );
 	for ( size_t i = 0; i < bsCurves.size(); ++i )
-		for ( float t = 0; t < 1; t += 0.01f )
+		for ( float t = 0; t < 1; t += step )
 		{
 			Vector3D const &p = bsCurves[i]->eval ( t );
 			glVertex3d ( p[0], p[1], p[2] );
@@ -475,60 +480,38 @@ void MyViewer::drawControlPoints() const
 	}
 	glEnd();
 	glPointSize ( 1.0 );
+	glColor3d ( 0.0, 1.0, 0.0 );
+	glLineWidth ( 3.0 );
+	glBegin ( GL_LINE_STRIP );
+	for ( size_t i = 0; i < bsCurves.size(); ++i )
+	{
+		std::vector<Vector3D> controlPoints = bsCurves[i]->getControlPoints();
+		size_t numberOfControlPoints = controlPoints.size();
+		for ( size_t k = 0; k < numberOfControlPoints; ++k )
+		{
+			Vector3D const &p = controlPoints[k];
+			glVertex3d ( p[0], p[1], p[2] );
+		}
+
+	}
+	glEnd();
+	glLineWidth ( 1.0 );
+	glPointSize ( 1.0 );
 	glEnable ( GL_LIGHTING );
 
 }
 
 void MyViewer::drawNormals() const
 {
-
-	Transfinite::RMF rmf;
-
 	for ( size_t i = 0; i < bsCurves.size(); ++i )
 	{
-
-		rmf.setCurve ( bsCurves[i] );
-		std::vector<Geometry::Vector3D> derstart1;
-		std::vector<Geometry::Vector3D> derstart2;
-		std::vector<Geometry::Vector3D> derend1;
-		std::vector<Geometry::Vector3D> derend2;
-		if ( i == 0 )
-		{
-			bsCurves[0]->eval ( 0, 1, derstart1 );
-			bsCurves[bsCurves.size() - 1]->eval ( 1, 1, derstart2 );
-
-			bsCurves[0]->eval ( 1, 1, derend1 );
-			bsCurves[1]->eval ( 0, 1, derend2 );
-
-		}
-
-		else if ( i == bsCurves.size() - 1 )
-		{
-			bsCurves[bsCurves.size() - 1]->eval ( 0, 1, derstart1 );
-			bsCurves[bsCurves.size() - 2]->eval ( 1, 1, derstart2 );
-
-			bsCurves[bsCurves.size() - 1]->eval ( 1, 1, derend1 );
-			bsCurves[0]->eval ( 0, 1, derend2 );
-
-		}
-		else
-		{
-			bsCurves[i]->eval ( 0, 1, derstart1 );
-			bsCurves[i - 1]->eval ( 1, 1, derstart2 );
-
-			bsCurves[i]->eval ( 1, 1, derend1 );
-			bsCurves[i + 1]->eval ( 0, 1, derend2 );
-
-		}
-		rmf.setStart ( ( derstart1[1] ^ derstart2[1] ).normalize() );
-		rmf.setEnd ( - ( derend1[1] ^ derend2[1] ).normalize() );
-		rmf.update();
-		for ( float t = 0.01f; t < 1; t += 0.1f )
+		int j = 0;
+		for ( float t = 0.01f; t < 1; t += step * 10 )
 		{
 
-			Vector3D p1 = rmf.eval ( t ) ;
+			/*Vector3D p1 = rmf.eval ( t ) ;*/
 			Vector3D p2 = bsCurves[i]->eval ( t );
-			Vec  arrowEndPoint = Vec ( p1[0], p1[1], p1[2] );
+			Vec const arrowEndPoint = normals.at ( i ) [j];
 			//arrowEndPoint.normalize();
 			Vec const &arrowStartPoint = Vec ( p2[0], p2[1], p2[2] );
 
@@ -536,7 +519,7 @@ void MyViewer::drawNormals() const
 			drawArrow ( arrowStartPoint, ( arrowStartPoint + arrowEndPoint * normalSize ) , normalSize / 50.0 );
 
 			glEnd();
-
+			++j;
 
 		}
 	}
@@ -616,7 +599,6 @@ void MyViewer::postSelection ( const QPoint & p )
 	}
 	else
 	{
-
 		selected = sel;
 		axes.position[0] = bsCurves[sel / 1000]->getControlPoints() [sel % 1000][0];
 		axes.position[1] = bsCurves[sel / 1000]->getControlPoints() [sel % 1000][1];
@@ -730,6 +712,92 @@ void MyViewer::keyPressEvent ( QKeyEvent * e )
 //	updateMeanCurvature();
 //}
 
+void MyViewer::calculateNormals ( float _step )
+{
+	Transfinite::RMF rmf;
+
+	for ( size_t i = 0; i < bsCurves.size(); ++i )
+	{
+
+		rmf.setCurve ( bsCurves[i] );
+		std::vector<Geometry::Vector3D> derstart1;
+		std::vector<Geometry::Vector3D> derstart2;
+		std::vector<Geometry::Vector3D> derend1;
+		std::vector<Geometry::Vector3D> derend2;
+		if ( i == 0 )
+		{
+			bsCurves[0]->eval ( 0, 1, derstart1 );
+			bsCurves[bsCurves.size() - 1]->eval ( 1, 1, derstart2 );
+
+			bsCurves[0]->eval ( 1, 1, derend1 );
+			bsCurves[1]->eval ( 0, 1, derend2 );
+
+		}
+
+		else if ( i == bsCurves.size() - 1 )
+		{
+			bsCurves[bsCurves.size() - 1]->eval ( 0, 1, derstart1 );
+			bsCurves[bsCurves.size() - 2]->eval ( 1, 1, derstart2 );
+
+			bsCurves[bsCurves.size() - 1]->eval ( 1, 1, derend1 );
+			bsCurves[0]->eval ( 0, 1, derend2 );
+
+		}
+		else
+		{
+			bsCurves[i]->eval ( 0, 1, derstart1 );
+			bsCurves[i - 1]->eval ( 1, 1, derstart2 );
+
+			bsCurves[i]->eval ( 1, 1, derend1 );
+			bsCurves[i + 1]->eval ( 0, 1, derend2 );
+
+		}
+		rmf.setStart ( ( derstart1[1] ^ derstart2[1] ).normalize() );
+		rmf.setEnd ( - ( derend1[1] ^ derend2[1] ).normalize() );
+		rmf.update();
+		std::vector<Vec>  normalsOfThisCurve;
+		for ( float t = 0.01f; t < 1; t += _step )
+		{
+			Vector3D p = rmf.eval ( t );
+
+			normalsOfThisCurve.push_back ( Vec ( p[0], p[1], p[2] ) );
+		}
+		normals[i] = normalsOfThisCurve ;
+	}
+}
+
+void MyViewer::calculatePlain()
+{
+	Vector3D sum;
+	float j = 0;
+	for ( auto i : bsCurves )
+	{
+
+		for ( float t = 0; t < 1; t += step )
+		{
+
+			sum = sum + i->eval ( t );
+			++j;
+		}
+	}
+	sum = sum / j;
+	plainPoint = Vec ( sum[0], sum[1], sum[2] );
+
+	calculateNormals ( step );
+	sum = Vector3D ( 0, 0, 0 );
+	float j = 0;
+	for ( auto curve : normals )
+		for ( auto normal : curve.second )
+		{
+			sum[0] = sum[0] + normal[0];
+			sum[1] = sum[1] + normal[1];
+			sum[2] = sum[2] + normal[2];
+			++j;
+		}
+	sum /= j;
+	plainNormal = Vec ( sum[0], sum[1], sum[2] );
+}
+
 Vec MyViewer::intersectLines ( Vec const & ap, Vec const & ad, Vec const & bp, Vec const & bd ) const
 {
 	// always returns a point on the (ap, ad) line
@@ -824,6 +892,7 @@ void MyViewer::mouseMoveEvent ( QMouseEvent * e )
 			mesh.request_face_normals(); mesh.request_vertex_normals();
 			mesh.update_face_normals();  mesh.update_vertex_normals();
 			updateMeanCurvature();*/
+		calculateNormals ( 0.1f );
 		updateGL();
 	}
 	else

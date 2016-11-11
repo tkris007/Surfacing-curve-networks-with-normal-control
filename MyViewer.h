@@ -73,10 +73,16 @@ private:
 	static void bernsteinAll ( size_t n, double u, std::vector<double> &coeff );
 	void generateMesh();
 
+	void calculateNormals ( float _step );
+	void calculatePlain();
 	size_t degree[2];
 	std::vector<Vec> control_points;
 
+	float step;
+	Vec plainPoint;
+	Vec plainNormal;
 	std::vector<std::shared_ptr<Geometry::BSCurve>> bsCurves;
+	std::map<size_t, std::vector<Vec> > normals;
 	MyMesh mesh;
 	double mean_min, mean_max;
 	double cutoff_ratio;
