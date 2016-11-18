@@ -258,3 +258,6 @@ paket-files/
 PropertySheet.props
 *.sln
 *.vcxproj*
+/*.pro
+/Win32
+/*.props
