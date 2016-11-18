@@ -181,7 +181,7 @@ BSCurve::arcLength ( double from, double to ) const
 	return sum + arcLength ( next, to );
 }
 
-std::vector<Vector3D> BSCurve::getControlPoints()
+std::vector<Vector3D>& BSCurve::getControlPoints()
 {
 	return cp_;
 }

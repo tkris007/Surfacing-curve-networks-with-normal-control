@@ -73,10 +73,16 @@ private:
 	static void bernsteinAll ( size_t n, double u, std::vector<double> &coeff );
 	void generateMesh();
 
+	void calculateNormals ( float _step );
+	void calculatePlain();
 	size_t degree[2];
 	std::vector<Vec> control_points;
 
+	float step;
+	Vec plainPoint;
+	Vec plainNormal;
 	std::vector<std::shared_ptr<Geometry::BSCurve>> bsCurves;
+	std::map<size_t, std::vector<Vec> > normals;
 	MyMesh mesh;
 	double mean_min, mean_max;
 	double cutoff_ratio;
@@ -85,6 +91,7 @@ private:
 	enum { COLOR_PLAIN, COLOR_MEAN, COLOR_ISOPHOTES } coloring;
 	GLuint isophote_texture;
 	size_t selected;
+	float normalSize;
 	struct ModificationAxes
 	{
 		bool shown;
@@ -95,14 +102,14 @@ private:
 	} axes;
 
 	/**
-	 * Returns the next line from file as a stringstream
+	 * Returns the next line from file as a string
 	 */
-	std::stringstream nextLine(std::ifstream &file);
+	std::string nextLine ( std::ifstream &file );
 
-	/** 
+	/**
 	 * Reads 1 curve from file (file input stream)
 	 */
-	void readBSCurve(std::ifstream &file);
+	void readBSCurve ( std::ifstream &file );
 };
 
 #include "MyViewer.hpp"
