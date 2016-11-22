@@ -5,6 +5,7 @@
 #include <QGLViewer/qglviewer.h>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
 #include "rmf.hh"
+#include <Fade_2D.h>
 
 using qglviewer::Vec;
 
@@ -75,6 +76,9 @@ private:
 
 	void calculateNormals ( float _step );
 	void calculatePlain();
+	void calculate2DPoints (  );
+
+	GEOM_FADE25D::Fade_2D Triangleator;
 	size_t degree[2];
 	std::vector<Vec> control_points;
 
@@ -83,6 +87,7 @@ private:
 	Vec plainNormal;
 	std::vector<std::shared_ptr<Geometry::BSCurve>> bsCurves;
 	std::map<size_t, std::vector<Vec> > normals;
+	std::vector<Vec> pointsOnPlain;
 	MyMesh mesh;
 	double mean_min, mean_max;
 	double cutoff_ratio;
