@@ -310,6 +310,11 @@ bool MyViewer::openBSpline ( std::string const &filename )
 		file.close();
 
 		calculatePlain();
+		generateMesh();
+		mesh.request_face_normals(); mesh.request_vertex_normals();
+		mesh.update_face_normals();  mesh.update_vertex_normals();
+		updateMeanCurvature();
+
 		/*MyMesh::Point box_min, box_max;
 		box_min = box_max = mesh.point ( *mesh.vertices_begin() );
 		for ( MyMesh::ConstVertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
@@ -478,6 +483,12 @@ void MyViewer::drawControlPoints() const
 		}
 
 	}
+	glColor3d ( 1.0, 1.0, 0.0 );
+	for ( auto p : pointsOnPlain )
+	{
+		glVertex3d ( p[0], p[1], p[2] );
+	}
+	glVertex3d ( plainPoint[0], plainPoint[1], plainPoint[2] );
 	glEnd();
 	glPointSize ( 1.0 );
 	glColor3d ( 0.0, 1.0, 0.0 );
@@ -506,23 +517,30 @@ void MyViewer::drawNormals() const
 	for ( size_t i = 0; i < bsCurves.size(); ++i )
 	{
 		int j = 0;
-		for ( float t = 0.01f; t < 1; t += step * 10 )
+		for ( float t = 0.00f; t < 1; t += step * 10 )
 		{
 
 			/*Vector3D p1 = rmf.eval ( t ) ;*/
 			Vector3D p2 = bsCurves[i]->eval ( t );
-			Vec const arrowEndPoint = normals.at ( i ) [j];
+			Vec const arrowEndPoint = normals.at ( i ) [j * 10];
 			//arrowEndPoint.normalize();
 			Vec const &arrowStartPoint = Vec ( p2[0], p2[1], p2[2] );
 
 			glColor3f ( 1.0, 0.0, 0.0 );
 			drawArrow ( arrowStartPoint, ( arrowStartPoint + arrowEndPoint * normalSize ) , normalSize / 50.0 );
 
-			glEnd();
+
 			++j;
 
 		}
 	}
+	Vec const arrowEndPoint = plainNormal;
+	//arrowEndPoint.normalize();
+	Vec const &arrowStartPoint = plainPoint;
+
+	glColor3f ( 0.0, 1.0, 1.0 );
+	drawArrow ( arrowStartPoint, ( arrowStartPoint + arrowEndPoint * normalSize ), normalSize / 50.0 );
+	glEnd();
 }
 
 void MyViewer::drawAxes() const
@@ -756,7 +774,7 @@ void MyViewer::calculateNormals ( float _step )
 		rmf.setEnd ( - ( derend1[1] ^ derend2[1] ).normalize() );
 		rmf.update();
 		std::vector<Vec>  normalsOfThisCurve;
-		for ( float t = 0.01f; t < 1; t += _step )
+		for ( float t = 0.00f; t < 1; t += _step )
 		{
 			Vector3D p = rmf.eval ( t );
 
@@ -775,8 +793,8 @@ void MyViewer::calculatePlain()
 
 		for ( float t = 0; t < 1; t += step )
 		{
-
 			sum = sum + i->eval ( t );
+
 			++j;
 		}
 	}
@@ -785,7 +803,7 @@ void MyViewer::calculatePlain()
 
 	calculateNormals ( step );
 	sum = Vector3D ( 0, 0, 0 );
-	float j = 0;
+	j = 0;
 	for ( auto curve : normals )
 		for ( auto normal : curve.second )
 		{
@@ -794,8 +812,25 @@ void MyViewer::calculatePlain()
 			sum[2] = sum[2] + normal[2];
 			++j;
 		}
-	sum /= j;
+	sum = sum / j;
 	plainNormal = Vec ( sum[0], sum[1], sum[2] );
+	plainNormal.normalize();
+	calculate2DPoints();
+}
+
+void MyViewer::calculate2DPoints (  )
+{
+	for ( auto i : bsCurves )
+	{
+		for ( float t = 0; t < 1; t += step )
+		{
+			Vector3D tmp = i->eval ( t );
+			Vec q = Vec ( tmp[0], tmp[1], tmp[2] );
+			float l = ( q - plainPoint ) * plainNormal ;
+			Vec result = q - l * plainNormal;
+			pointsOnPlain.push_back ( result );
+		}
+	}
 }
 
 Vec MyViewer::intersectLines ( Vec const & ap, Vec const & ad, Vec const & bp, Vec const & bd ) const
@@ -829,7 +864,49 @@ void MyViewer::bernsteinAll ( size_t n, double u, std::vector<double> &coeff )
 
 void MyViewer::generateMesh()
 {
-	size_t const resolution = 30;
+	std::vector<GEOM_FADE25D::Point2> points;
+	std::vector<GEOM_FADE25D::Point2*> Delaunay;
+	for ( auto i : pointsOnPlain )
+	{
+		GEOM_FADE25D::Point2 p ( i[0], i[1], i[2] );
+		points.push_back ( p );
+
+	}
+	Triangleator.insert ( points , Delaunay );
+	//Triangleator.refine();
+	std::vector<GEOM_FADE25D::Triangle2*> vAllDelaunayTriangles;
+	Triangleator.getTrianglePointers ( vAllDelaunayTriangles );
+	std::vector<GEOM_FADE25D::Point2*> vAllPoints;
+	Triangleator.getVertexPointers ( vAllPoints );
+
+	mesh.clear();
+	std::vector<MyMesh::VertexHandle> handles, tri;
+
+	for ( std::vector<GEOM_FADE25D::Triangle2*>::iterator it = vAllDelaunayTriangles.begin();
+	        it != vAllDelaunayTriangles.end(); ++it )
+	{
+		tri.clear();
+
+		GEOM_FADE25D::Triangle2* pT ( *it );
+		GEOM_FADE25D::Point2 p;
+
+		p = *pT->getCorner ( 0 );
+		handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p.x(), p.y(), p.z() ) ) );
+		tri.push_back ( handles[handles.size() - 1] );
+
+		p = *pT->getCorner ( 1 );
+		handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p.x(), p.y(), p.z() ) ) );
+		tri.push_back ( handles[handles.size() - 1] );
+
+		p = *pT->getCorner ( 2 );
+		handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p.x(), p.y(), p.z() ) ) );
+		tri.push_back ( handles[handles.size() - 1] );
+		mesh.add_face ( tri );
+	}
+
+
+	//handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p[0], p[1], p[2] ) ) );
+	/*size_t const resolution = 30;
 
 	mesh.clear();
 	std::vector<MyMesh::VertexHandle> handles, tri;
@@ -869,7 +946,7 @@ void MyViewer::generateMesh()
 			tri.push_back ( handles[i * resolution + j + 1] );
 			tri.push_back ( handles[ ( i + 1 ) * resolution + j + 1] );
 			mesh.add_face ( tri );
-		}
+		}*/
 }
 
 void MyViewer::mouseMoveEvent ( QMouseEvent * e )
@@ -888,10 +965,10 @@ void MyViewer::mouseMoveEvent ( QMouseEvent * e )
 		bsCurves[selected / 1000]->getControlPoints() [selected % 1000][0] = Vec ( axes.position[0], axes.position[1], axes.position[2] ) [0];
 		bsCurves[selected / 1000]->getControlPoints() [selected % 1000][1] = Vec ( axes.position[0], axes.position[1], axes.position[2] ) [1];
 		bsCurves[selected / 1000]->getControlPoints() [selected % 1000][2] = Vec ( axes.position[0], axes.position[1], axes.position[2] ) [2];
-		/*	generateMesh();
-			mesh.request_face_normals(); mesh.request_vertex_normals();
-			mesh.update_face_normals();  mesh.update_vertex_normals();
-			updateMeanCurvature();*/
+		generateMesh();
+		mesh.request_face_normals(); mesh.request_vertex_normals();
+		mesh.update_face_normals();  mesh.update_vertex_normals();
+		updateMeanCurvature();
 		calculateNormals ( 0.1f );
 		updateGL();
 	}
