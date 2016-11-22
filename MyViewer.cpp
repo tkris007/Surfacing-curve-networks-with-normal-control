@@ -785,7 +785,7 @@ void MyViewer::calculatePlain()
 
 	calculateNormals ( step );
 	sum = Vector3D ( 0, 0, 0 );
-	float j = 0;
+	j = 0;
 	for ( auto curve : normals )
 		for ( auto normal : curve.second )
 		{
