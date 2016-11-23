@@ -296,6 +296,8 @@ bool MyViewer::openBSpline ( std::string const &filename )
 	try
 	{
 		bsCurves.clear();
+		pointsOnPlain.clear();
+		normals.clear();
 		std::ifstream file ( filename.c_str() );
 		if ( file.good() )
 		{
@@ -315,17 +317,17 @@ bool MyViewer::openBSpline ( std::string const &filename )
 		mesh.update_face_normals();  mesh.update_vertex_normals();
 		updateMeanCurvature();
 
-		/*MyMesh::Point box_min, box_max;
+		MyMesh::Point box_min, box_max;
 		box_min = box_max = mesh.point ( *mesh.vertices_begin() );
 		for ( MyMesh::ConstVertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
 		{
-		box_min.minimize ( mesh.point ( *i ) );
-		box_max.maximize ( mesh.point ( *i ) );
+			box_min.minimize ( mesh.point ( *i ) );
+			box_max.maximize ( mesh.point ( *i ) );
 		}
 		camera()->setSceneBoundingBox ( Vec ( box_min[0], box_min[1], box_min[2] ),
-		Vec ( box_max[0], box_max[1], box_max[2] ) );*/
-		camera()->setSceneBoundingBox ( Vec ( -150, -150, -150 ),
-		                                Vec ( 150, 150, 150 ) );
+		                                Vec ( box_max[0], box_max[1], box_max[2] ) );
+		/* camera()->setSceneBoundingBox ( Vec ( -150, -150, -150 ),
+		                                 Vec ( 150, 150, 150 ) );*/
 		camera()->showEntireScene();
 		/*camera()->setSceneCenter ( Vec ( -0, -0, -0 ) );
 		camera()->setSceneRadius ( 250 );
@@ -822,7 +824,7 @@ void MyViewer::calculate2DPoints (  )
 {
 	for ( auto i : bsCurves )
 	{
-		for ( float t = 0; t < 1; t += step )
+		for ( float t = 0; t < 1 - step; t += step )
 		{
 			Vector3D tmp = i->eval ( t );
 			Vec q = Vec ( tmp[0], tmp[1], tmp[2] );
@@ -870,20 +872,46 @@ void MyViewer::generateMesh()
 	{
 		GEOM_FADE25D::Point2 p ( i[0], i[1], i[2] );
 		points.push_back ( p );
+		//	Triangleator.insert ( p );
 
 	}
 	Triangleator.insert ( points , Delaunay );
-	//Triangleator.refine();
-	std::vector<GEOM_FADE25D::Triangle2*> vAllDelaunayTriangles;
-	Triangleator.getTrianglePointers ( vAllDelaunayTriangles );
+
+//	Triangleator.refine ( Triangleator.importTriangles ( points, true, false ), 20, 2, 3, true );
 	std::vector<GEOM_FADE25D::Point2*> vAllPoints;
+	std::vector<GEOM_FADE25D::Triangle2*> vAllDelaunayTriangles;
+	std::vector<GEOM_FADE25D::Triangle2*> wtf;
+	std::vector<GEOM_FADE25D::Triangle2*> ads;
+
+
+	Triangleator.getTrianglePointers ( vAllDelaunayTriangles );
+	for ( auto i : vAllDelaunayTriangles )
+	{
+		ads.push_back ( i );
+	}
+	ads.pop_back();
+	ads.pop_back();
+	ads.pop_back();
+	//ads.push_back ( vAllDelaunayTriangles.front() );
+	//std::reverse ( ads.begin(), ads.end() );
+	GEOM_FADE25D::Zone2* zone ( Triangleator.createZone ( ads ) );
+	GEOM_FADE25D::Zone2* zone2 ( zone->convertToBoundedZone() );
+
+
+	Triangleator.applyConstraintsAndZones();
+	//zone->get
+
+	Triangleator.refine ( zone2, 20, 2, 3, true );
+
 	Triangleator.getVertexPointers ( vAllPoints );
 
+	//zone2->getTriangles ( wtf );
+	Triangleator.getTrianglePointers ( wtf );
 	mesh.clear();
 	std::vector<MyMesh::VertexHandle> handles, tri;
 
-	for ( std::vector<GEOM_FADE25D::Triangle2*>::iterator it = vAllDelaunayTriangles.begin();
-	        it != vAllDelaunayTriangles.end(); ++it )
+	for ( std::vector<GEOM_FADE25D::Triangle2*>::iterator it = wtf.begin();
+	        it != wtf.end(); ++it )
 	{
 		tri.clear();
 
