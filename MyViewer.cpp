@@ -868,17 +868,55 @@ void MyViewer::generateMesh()
 {
 	std::vector<GEOM_FADE25D::Point2> points;
 	std::vector<GEOM_FADE25D::Point2*> Delaunay;
+
+	std::vector<GEOM_FADE25D::Segment2> vSegments1;
+
+	unsigned int index = 0;
+	// Iteralunk korbe a gorbe hataran
 	for ( auto i : pointsOnPlain )
 	{
+		// Kiszedjuk az aktualis pontot, elmentjuk
 		GEOM_FADE25D::Point2 p ( i[0], i[1], i[2] );
 		points.push_back ( p );
 		//	Triangleator.insert ( p );
 
+		//// KiszedjÅE a kovetkezo pontot is
+		//++index;
+		//qglviewer::Vec j;
+		//if(index < pointsOnPlain.size())
+		//{
+		//	j = pointsOnPlain.at(index);
+		//}
+		//else
+		//{
+		//	// ami az elso pont, ha korbeertunk
+		//	j = pointsOnPlain.at(0);
+		//}
+		//GEOM_FADE25D::Point2 p2 ( j[0], j[1], j[2] );
+		//// A kapott 2 szomszedos pontbol csinalunk egy szakaszt
+		//qDebug() << "Index: " << index;
+		//qDebug() << "i: " << i[0] << " " << i[1] << " " << i[2];
+		//qDebug() << "j: " << j[0] << " " << j[1] << " " << j[2];
+		//vSegments1.push_back(GEOM_FADE25D::Segment2(p,p2));
 	}
 	Triangleator.insert ( points , Delaunay );
 
 //	Triangleator.refine ( Triangleator.importTriangles ( points, true, false ), 20, 2, 3, true );
 	std::vector<GEOM_FADE25D::Point2*> vAllPoints;
+
+	//GEOM_FADE25D::ConstraintGraph2* pCG1(NULL);
+	////pCG1 = Triangleator.createConstraint(vSegments1, GEOM_FADE25D::CIS_CONSTRAINED_DELAUNAY);
+	//pCG1 = Triangleator.createConstraint(vSegments1, GEOM_FADE25D::CIS_CONFORMING_DELAUNAY);
+	//Triangleator.applyConstraintsAndZones();
+//
+	//// 4) Create a Zone2 using ZL_GROW
+	//GEOM_FADE25D::Point2 seedPoint(plainPoint[0],plainPoint[1],plainPoint[2]);
+	//std::vector<GEOM_FADE25D::ConstraintGraph2*> vCG;
+	//vCG.push_back(pCG1);
+	//GEOM_FADE25D::Zone2* pZone = Triangleator.createZone(vCG, GEOM_FADE25D::ZL_GROW, seedPoint);
+
+	//Triangleator.refine(pZone,27,0.01,15,true);
+
 	std::vector<GEOM_FADE25D::Triangle2*> vAllDelaunayTriangles;
 	std::vector<GEOM_FADE25D::Triangle2*> wtf;
 	std::vector<GEOM_FADE25D::Triangle2*> ads;

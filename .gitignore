@@ -258,10 +258,6 @@ paket-files/
 PropertySheet.props
 *.sln
 *.vcxproj*
-
-# Linux
-*.o
-Makefile
-sample-framework
-moc_*
-qrc_*
+/*.pro
+/Win32
+/*.props
