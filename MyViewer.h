@@ -4,6 +4,23 @@
 
 #include <string>
 
+#include <cstddef>
+#include <cstdlib>
+#include <fstream>
+#include <vector>
+
+#define ANSI_DECLARATORS
+#define REAL float
+#define VOID void
+
+extern "C" {
+#include "triangle.h"
+}
+
+#undef REAL float
+#undef VOID void
+#undef ANSI_DECLARATORS
+
 #include <QGLViewer/qglviewer.h>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
 #include "rmf.hh"

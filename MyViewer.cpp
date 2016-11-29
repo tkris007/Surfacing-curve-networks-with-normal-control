@@ -876,146 +876,202 @@ void MyViewer::bernsteinAll ( size_t n, double u, std::vector<double> &coeff )
 
 void MyViewer::generateMesh()
 {
-	GEOM_FADE25D::Fade_2D Triangleator;
-	mesh.clear();
-	std::vector<GEOM_FADE25D::Point2> points;
-	std::vector<GEOM_FADE25D::Point2*> Delaunay;
+////	GEOM_FADE25D::Fade_2D Triangleator;
+////	mesh.clear();
+////	std::vector<GEOM_FADE25D::Point2> points;
+////	std::vector<GEOM_FADE25D::Point2*> Delaunay;
+////
+////	std::vector<GEOM_FADE25D::Segment2> vSegments1;
+////
+////	unsigned int index = 0;
+////	// Iteralunk korbe a gorbe hataran
+////	for ( auto i : pointsOnPlain )
+////	{
+////		// Kiszedjuk az aktualis pontot, elmentjuk
+////		GEOM_FADE25D::Point2 p ( i[0], i[1], i[2] );
+////		points.push_back ( p );
+////		//	Triangleator.insert ( p );
+////
+////		//// KiszedjÅE a kovetkezo pontot is
+////		//++index;
+////		//qglviewer::Vec j;
+////		//if(index < pointsOnPlain.size())
+////		//{
+////		//	j = pointsOnPlain.at(index);
+////		//}
+////		//else
+////		//{
+////		//	// ami az elso pont, ha korbeertunk
+////		//	j = pointsOnPlain.at(0);
+////		//}
+////		//GEOM_FADE25D::Point2 p2 ( j[0], j[1], j[2] );
+////		//// A kapott 2 szomszedos pontbol csinalunk egy szakaszt
+////		//qDebug() << "Index: " << index;
+////		//qDebug() << "i: " << i[0] << " " << i[1] << " " << i[2];
+////		//qDebug() << "j: " << j[0] << " " << j[1] << " " << j[2];
+////		//vSegments1.push_back(GEOM_FADE25D::Segment2(p,p2));
+////	}
+////	Triangleator.insert ( points , Delaunay );
+////
+//////	Triangleator.refine ( Triangleator.importTriangles ( points, true, false ), 20, 2, 3, true );
+////	std::vector<GEOM_FADE25D::Point2*> vAllPoints;
+////
+////	//GEOM_FADE25D::ConstraintGraph2* pCG1(NULL);
+////	////pCG1 = Triangleator.createConstraint(vSegments1, GEOM_FADE25D::CIS_CONSTRAINED_DELAUNAY);
+////	//pCG1 = Triangleator.createConstraint(vSegments1, GEOM_FADE25D::CIS_CONFORMING_DELAUNAY);
+////	//Triangleator.applyConstraintsAndZones();
+//////
+////	//// 4) Create a Zone2 using ZL_GROW
+////	//GEOM_FADE25D::Point2 seedPoint(plainPoint[0],plainPoint[1],plainPoint[2]);
+////	//std::vector<GEOM_FADE25D::ConstraintGraph2*> vCG;
+////	//vCG.push_back(pCG1);
+////	//GEOM_FADE25D::Zone2* pZone = Triangleator.createZone(vCG, GEOM_FADE25D::ZL_GROW, seedPoint);
+////
+////	//Triangleator.refine ( pZone, 27, 0.01, 15, true );
+////
+////	std::vector<GEOM_FADE25D::Triangle2*> vAllDelaunayTriangles;
+////	std::vector<GEOM_FADE25D::Triangle2*> wtf;
+////	std::vector<GEOM_FADE25D::Triangle2*> ads;
+////
+////	Triangleator.getVertexPointers ( vAllPoints );
+////
+////
+////
+////	Triangleator.getTrianglePointers ( vAllDelaunayTriangles );
+////
+////
+////	for ( auto i : vAllDelaunayTriangles )
+////	{
+////		ads.push_back ( i );
+////	}
+////	for ( int i = 0; i < bsCurves.size() - 1; ++i )
+////	{
+////		Vec sp = ( pointsOnPlain[98 + i * 100] + pointsOnPlain[100 + i * 100] + pointsOnPlain[99 + i * 100] ) / 3.0;
+////		GEOM_FADE25D::Point2 ssp ( sp[0], sp[1], sp[2] );
+////
+////		GEOM_FADE25D::Triangle2* hsz = Triangleator.locate ( ssp );
+////		auto ithsz = std::find ( ads.begin(), ads.end(), hsz );
+////		if ( ithsz != ads.end() )
+////		{
+////			ads.erase ( ithsz );
+////		}
+////	}
+////	/*ads.pop_back();*/
+////	/*ads.pop_back();
+////	ads.pop_back();*/
+////	//ads.push_back ( vAllDelaunayTriangles.front() );
+////	//std::reverse ( ads.begin(), ads.end() );
+////	GEOM_FADE25D::Zone2* zone ( Triangleator.createZone ( ads ) );
+////	GEOM_FADE25D::Zone2* zone2 ( zone->convertToBoundedZone() );
+////
+////
+////	Triangleator.applyConstraintsAndZones();
+////	//zone->get
+////
+////	Triangleator.refine ( zone2, 20, 2, 3, true );
+////
+////	Triangleator.getVertexPointers ( vAllPoints );
+////
+////	////zone2->getTriangles ( wtf );
+////	//ads.clear();
+////	Triangleator.getTrianglePointers ( wtf );
+////	//for ( auto i : wtf )
+////	//{
+////	//	ads.push_back ( i );
+////	//}
+////	//GEOM_FADE25D::Zone2* zone3 (   );
+////	//GEOM_FADE25D::Zone2* zone4 ( zone3->convertToBoundedZone() );
+////
+////
+////	//Triangleator.applyConstraintsAndZones();
+////	//mesh.clear();
+////	//Triangleator.refine ( zone4, 20, 2, 3, true );
+////
+////	//Triangleator.getVertexPointers ( vAllPoints );
+////
+////	////zone2->getTriangles ( wtf );
+////	//wtf.clear();
+////	////ads.clear();
+////	//Triangleator.getTrianglePointers ( wtf );
 
-	std::vector<GEOM_FADE25D::Segment2> vSegments1;
+	Vec u ( plainNormal[1], -plainNormal[0], plainNormal[2] );
+	Vec v = u ^ plainNormal;
+	u.normalize();
+	v.normalize();
 
-	unsigned int index = 0;
-	// Iteralunk korbe a gorbe hataran
+	std::vector<float> points;
 	for ( auto i : pointsOnPlain )
 	{
-		// Kiszedjuk az aktualis pontot, elmentjuk
-		GEOM_FADE25D::Point2 p ( i[0], i[1], i[2] );
-		points.push_back ( p );
-		//	Triangleator.insert ( p );
+		points.push_back ( ( ( i - plainPoint ) *u ) );
+		points.push_back ( ( ( i - plainPoint ) *v ) );
 
-		//// KiszedjÅE a kovetkezo pontot is
-		//++index;
-		//qglviewer::Vec j;
-		//if(index < pointsOnPlain.size())
-		//{
-		//	j = pointsOnPlain.at(index);
-		//}
-		//else
-		//{
-		//	// ami az elso pont, ha korbeertunk
-		//	j = pointsOnPlain.at(0);
-		//}
-		//GEOM_FADE25D::Point2 p2 ( j[0], j[1], j[2] );
-		//// A kapott 2 szomszedos pontbol csinalunk egy szakaszt
-		//qDebug() << "Index: " << index;
-		//qDebug() << "i: " << i[0] << " " << i[1] << " " << i[2];
-		//qDebug() << "j: " << j[0] << " " << j[1] << " " << j[2];
-		//vSegments1.push_back(GEOM_FADE25D::Segment2(p,p2));
 	}
-	Triangleator.insert ( points , Delaunay );
 
-//	Triangleator.refine ( Triangleator.importTriangles ( points, true, false ), 20, 2, 3, true );
-	std::vector<GEOM_FADE25D::Point2*> vAllPoints;
-
-	//GEOM_FADE25D::ConstraintGraph2* pCG1(NULL);
-	////pCG1 = Triangleator.createConstraint(vSegments1, GEOM_FADE25D::CIS_CONSTRAINED_DELAUNAY);
-	//pCG1 = Triangleator.createConstraint(vSegments1, GEOM_FADE25D::CIS_CONFORMING_DELAUNAY);
-	//Triangleator.applyConstraintsAndZones();
+//	std::vector<double> points =
+//	{
+//		-1, -1,
+//		1, -1,
+//		1, 1,
+//		0, 0,
+//		-1, 1
+//	};
+	size_t n = points.size() / 2;
 //
-	//// 4) Create a Zone2 using ZL_GROW
-	//GEOM_FADE25D::Point2 seedPoint(plainPoint[0],plainPoint[1],plainPoint[2]);
-	//std::vector<GEOM_FADE25D::ConstraintGraph2*> vCG;
-	//vCG.push_back(pCG1);
-	//GEOM_FADE25D::Zone2* pZone = Triangleator.createZone(vCG, GEOM_FADE25D::ZL_GROW, seedPoint);
-
-	//Triangleator.refine ( pZone, 27, 0.01, 15, true );
-
-	std::vector<GEOM_FADE25D::Triangle2*> vAllDelaunayTriangles;
-	std::vector<GEOM_FADE25D::Triangle2*> wtf;
-	std::vector<GEOM_FADE25D::Triangle2*> ads;
-
-	Triangleator.getVertexPointers ( vAllPoints );
-
-
-
-	Triangleator.getTrianglePointers ( vAllDelaunayTriangles );
-
-
-	for ( auto i : vAllDelaunayTriangles )
+//// Input segments : just a closed polygon
+	std::vector<int> segments ( n * 2 );
+	for ( size_t i = 0; i < n; ++i )
 	{
-		ads.push_back ( i );
+		segments[2 * i] = i;
+		segments[2 * i + 1] = i + 1;
 	}
-	for ( int i = 0; i < bsCurves.size() - 1; ++i )
-	{
-		Vec sp = ( pointsOnPlain[98 + i * 100] + pointsOnPlain[100 + i * 100] + pointsOnPlain[99 + i * 100] ) / 3.0;
-		GEOM_FADE25D::Point2 ssp ( sp[0], sp[1], sp[2] );
+	segments[2 * n - 1] = 0;
+//
+// Setup input data structure
+	struct triangulateio in, out;
+	in.pointlist = &points[0];
+	in.numberofpoints = n;
+	in.numberofpointattributes = 0;
+	in.pointmarkerlist = NULL;
+	in.segmentlist = &segments[0];
+	in.numberofsegments = n;
+	in.segmentmarkerlist = NULL;
+	in.numberofholes = 0;
+	in.numberofregions = 0;
 
-		GEOM_FADE25D::Triangle2* hsz = Triangleator.locate ( ssp );
-		auto ithsz = std::find ( ads.begin(), ads.end(), hsz );
-		if ( ithsz != ads.end() )
-		{
-			ads.erase ( ithsz );
-		}
-	}
-	/*ads.pop_back();*/
-	/*ads.pop_back();
-	ads.pop_back();*/
-	//ads.push_back ( vAllDelaunayTriangles.front() );
-	//std::reverse ( ads.begin(), ads.end() );
-	GEOM_FADE25D::Zone2* zone ( Triangleator.createZone ( ads ) );
-	GEOM_FADE25D::Zone2* zone2 ( zone->convertToBoundedZone() );
+// Setup output data structure
+	out.pointlist = NULL;
+	out.pointattributelist = NULL;
+	out.pointmarkerlist = NULL;
+	out.trianglelist = NULL;
+	out.triangleattributelist = NULL;
+	out.segmentlist = NULL;
+	out.segmentmarkerlist = NULL;
 
-
-	Triangleator.applyConstraintsAndZones();
-	//zone->get
-
-	Triangleator.refine ( zone2, 20, 2, 3, true );
-
-	Triangleator.getVertexPointers ( vAllPoints );
-
-	////zone2->getTriangles ( wtf );
-	//ads.clear();
-	Triangleator.getTrianglePointers ( wtf );
-	//for ( auto i : wtf )
-	//{
-	//	ads.push_back ( i );
-	//}
-	//GEOM_FADE25D::Zone2* zone3 (   );
-	//GEOM_FADE25D::Zone2* zone4 ( zone3->convertToBoundedZone() );
-
-
-	//Triangleator.applyConstraintsAndZones();
-	//mesh.clear();
-	//Triangleator.refine ( zone4, 20, 2, 3, true );
-
-	//Triangleator.getVertexPointers ( vAllPoints );
-
-	////zone2->getTriangles ( wtf );
-	//wtf.clear();
-	////ads.clear();
-	//Triangleator.getTrianglePointers ( wtf );
+// Call the library function [with maximum triangle area = 0.005]
+	triangulate ( ( char * ) "pa15qzQY", &in, &out, nullptr /*( struct triangulateio * ) NULL*/ );
 	std::vector<MyMesh::VertexHandle> handles, tri;
 
-	for ( std::vector<GEOM_FADE25D::Triangle2*>::iterator it = wtf.begin();
-	        it != wtf.end(); ++it )
-	{
-		tri.clear();
+	//for ( std::vector<GEOM_FADE25D::Triangle2*>::iterator it = wtf.begin();
+	//        it != wtf.end(); ++it )
+	//{
+	//	tri.clear();
 
-		GEOM_FADE25D::Triangle2* pT ( *it );
-		GEOM_FADE25D::Point2 p;
+	//	GEOM_FADE25D::Triangle2* pT ( *it );
+	//	GEOM_FADE25D::Point2 p;
 
-		p = *pT->getCorner ( 0 );
-		handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p.x(), p.y(), p.z() ) ) );
-		tri.push_back ( handles[handles.size() - 1] );
+	//	p = *pT->getCorner ( 0 );
+	//	handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p.x(), p.y(), p.z() ) ) );
+	//	tri.push_back ( handles[handles.size() - 1] );
 
-		p = *pT->getCorner ( 1 );
-		handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p.x(), p.y(), p.z() ) ) );
-		tri.push_back ( handles[handles.size() - 1] );
+	//	p = *pT->getCorner ( 1 );
+	//	handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p.x(), p.y(), p.z() ) ) );
+	//	tri.push_back ( handles[handles.size() - 1] );
 
-		p = *pT->getCorner ( 2 );
-		handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p.x(), p.y(), p.z() ) ) );
-		tri.push_back ( handles[handles.size() - 1] );
-		mesh.add_face ( tri );
-	}
+	//	p = *pT->getCorner ( 2 );
+	//	handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p.x(), p.y(), p.z() ) ) );
+	//	tri.push_back ( handles[handles.size() - 1] );
+	//	mesh.add_face ( tri );
+	//}
 
 
 	//handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p[0], p[1], p[2] ) ) );
