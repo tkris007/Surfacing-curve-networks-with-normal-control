@@ -1,11 +1,16 @@
 #pragma once
 
+
+
 #include <string>
 
 #include <QGLViewer/qglviewer.h>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
 #include "rmf.hh"
 #include <Fade_2D.h>
+
+
+
 
 using qglviewer::Vec;
 
@@ -78,7 +83,7 @@ private:
 	void calculatePlain();
 	void calculate2DPoints (  );
 
-	GEOM_FADE25D::Fade_2D Triangleator;
+
 	size_t degree[2];
 	std::vector<Vec> control_points;
 

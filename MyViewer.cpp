@@ -675,6 +675,14 @@ void MyViewer::keyPressEvent ( QKeyEvent * e )
 			show_curves = !show_curves;
 			updateGL();
 			break;
+		case Qt::Key_G:
+			calculatePlain();
+			generateMesh();
+			mesh.request_face_normals(); mesh.request_vertex_normals();
+			mesh.update_face_normals();  mesh.update_vertex_normals();
+			updateMeanCurvature();
+			updateGL();
+			break;
 		case Qt::Key_8:
 			normalSize += 0.5;
 			updateGL();
@@ -788,6 +796,8 @@ void MyViewer::calculateNormals ( float _step )
 
 void MyViewer::calculatePlain()
 {
+	pointsOnPlain.clear();
+	normals.clear();
 	Vector3D sum;
 	float j = 0;
 	for ( auto i : bsCurves )
@@ -866,6 +876,8 @@ void MyViewer::bernsteinAll ( size_t n, double u, std::vector<double> &coeff )
 
 void MyViewer::generateMesh()
 {
+	GEOM_FADE25D::Fade_2D Triangleator;
+	mesh.clear();
 	std::vector<GEOM_FADE25D::Point2> points;
 	std::vector<GEOM_FADE25D::Point2*> Delaunay;
 
@@ -915,21 +927,38 @@ void MyViewer::generateMesh()
 	//vCG.push_back(pCG1);
 	//GEOM_FADE25D::Zone2* pZone = Triangleator.createZone(vCG, GEOM_FADE25D::ZL_GROW, seedPoint);
 
-	//Triangleator.refine(pZone,27,0.01,15,true);
+	//Triangleator.refine ( pZone, 27, 0.01, 15, true );
 
 	std::vector<GEOM_FADE25D::Triangle2*> vAllDelaunayTriangles;
 	std::vector<GEOM_FADE25D::Triangle2*> wtf;
 	std::vector<GEOM_FADE25D::Triangle2*> ads;
 
+	Triangleator.getVertexPointers ( vAllPoints );
+
+
 
 	Triangleator.getTrianglePointers ( vAllDelaunayTriangles );
+
+
 	for ( auto i : vAllDelaunayTriangles )
 	{
 		ads.push_back ( i );
 	}
-	ads.pop_back();
-	ads.pop_back();
-	ads.pop_back();
+	for ( int i = 0; i < bsCurves.size() - 1; ++i )
+	{
+		Vec sp = ( pointsOnPlain[98 + i * 100] + pointsOnPlain[100 + i * 100] + pointsOnPlain[99 + i * 100] ) / 3.0;
+		GEOM_FADE25D::Point2 ssp ( sp[0], sp[1], sp[2] );
+
+		GEOM_FADE25D::Triangle2* hsz = Triangleator.locate ( ssp );
+		auto ithsz = std::find ( ads.begin(), ads.end(), hsz );
+		if ( ithsz != ads.end() )
+		{
+			ads.erase ( ithsz );
+		}
+	}
+	/*ads.pop_back();*/
+	/*ads.pop_back();
+	ads.pop_back();*/
 	//ads.push_back ( vAllDelaunayTriangles.front() );
 	//std::reverse ( ads.begin(), ads.end() );
 	GEOM_FADE25D::Zone2* zone ( Triangleator.createZone ( ads ) );
@@ -943,9 +972,27 @@ void MyViewer::generateMesh()
 
 	Triangleator.getVertexPointers ( vAllPoints );
 
-	//zone2->getTriangles ( wtf );
+	////zone2->getTriangles ( wtf );
+	//ads.clear();
 	Triangleator.getTrianglePointers ( wtf );
-	mesh.clear();
+	//for ( auto i : wtf )
+	//{
+	//	ads.push_back ( i );
+	//}
+	//GEOM_FADE25D::Zone2* zone3 (   );
+	//GEOM_FADE25D::Zone2* zone4 ( zone3->convertToBoundedZone() );
+
+
+	//Triangleator.applyConstraintsAndZones();
+	//mesh.clear();
+	//Triangleator.refine ( zone4, 20, 2, 3, true );
+
+	//Triangleator.getVertexPointers ( vAllPoints );
+
+	////zone2->getTriangles ( wtf );
+	//wtf.clear();
+	////ads.clear();
+	//Triangleator.getTrianglePointers ( wtf );
 	std::vector<MyMesh::VertexHandle> handles, tri;
 
 	for ( std::vector<GEOM_FADE25D::Triangle2*>::iterator it = wtf.begin();
