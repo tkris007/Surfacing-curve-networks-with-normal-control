@@ -10,24 +10,20 @@
 #include <vector>
 
 #define ANSI_DECLARATORS
-#define REAL float
+#define REAL double
 #define VOID void
 
 extern "C" {
 #include "triangle.h"
 }
 
-#undef REAL float
-#undef VOID void
+#undef REAL
+#undef VOID
 #undef ANSI_DECLARATORS
 
 #include <QGLViewer/qglviewer.h>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
 #include "rmf.hh"
-#include <Fade_2D.h>
-
-
-
 
 using qglviewer::Vec;
 
@@ -47,9 +43,6 @@ public:
 
 	bool openBSpline ( std::string const &filename );
 	bool saveBSpline ( std::string const& filename );
-
-	//void increaseDegree();
-
 
 signals:
 	void startComputation ( QString message );
@@ -72,8 +65,6 @@ private:
 		{
 			double area;              // total area of the surrounding triangles
 			double mean;              // approximated mean curvature
-			double u;
-			double v;
 		};
 		FaceTraits
 		{
@@ -96,15 +87,14 @@ private:
 	static void bernsteinAll ( size_t n, double u, std::vector<double> &coeff );
 	void generateMesh();
 
-	void calculateNormals ( float _step );
+	void calculateNormals ( size_t _step );
 	void calculatePlain();
 	void calculate2DPoints (  );
 
-
-	size_t degree[2];
 	std::vector<Vec> control_points;
 
 	float step;
+        size_t sampling;
 	Vec plainPoint;
 	Vec plainNormal;
 	std::vector<std::shared_ptr<Geometry::BSCurve>> bsCurves;

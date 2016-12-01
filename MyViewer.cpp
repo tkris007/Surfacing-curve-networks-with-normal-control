@@ -22,15 +22,16 @@ using Geometry::Vector3D;
 
 MyViewer::MyViewer ( QWidget *parent ) :
 	QGLViewer ( parent ),
-	mean_min ( 0.0 ), mean_max ( 0.0 ), cutoff_ratio ( 0.05 ), normalSize ( 10 ),
+	mean_min ( 0.0 ), mean_max ( 0.0 ), cutoff_ratio ( 0.05 ),
 	show_control_points ( true ), show_solid ( true ), show_wireframe ( false ),
 	show_curves ( true ), show_normals ( false ),
-	coloring ( COLOR_PLAIN )
+	coloring ( COLOR_PLAIN ), normalSize ( 10 )
 {
 	setSelectRegionWidth ( 10 );
 	setSelectRegionHeight ( 10 );
 	axes.shown = false;
 	step = 0.01f;
+        sampling = 10;
 }
 
 MyViewer::~MyViewer()
@@ -72,102 +73,6 @@ void MyViewer::updateMeanCurvature ( bool update_min_max )
 		for ( MyMesh::ConstVertexFaceIter j ( mesh, *i ); j.is_valid(); ++j )
 		{ mesh.data ( *i ).area += mesh.data ( *j ).area; }
 	}
-
-	/*for ( MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
-	{
-	double E, F, G, L, M, N, H;
-	size_t const n = degree[0], m = degree[1];
-
-	std::vector<double> coeff_Su, coeff_v, coeff_Sv, coeff_u, coeff_Suu, coeff_Svv;
-
-	double u = mesh.data ( *i ).u;
-	double v = mesh.data ( *i ).v;
-
-	bernsteinAll ( n - 1, u, coeff_Su );
-	bernsteinAll ( m, v, coeff_v );
-	bernsteinAll ( n , u, coeff_u );
-	bernsteinAll ( m - 1, v, coeff_Sv );
-	bernsteinAll ( n - 2, u, coeff_Suu );
-	bernsteinAll ( m - 2, v, coeff_Svv );
-
-
-	Vec Su ( 0.0, 0.0, 0.0 );
-	Vec Sv ( 0.0, 0.0, 0.0 );
-
-	Vec Suu ( 0.0, 0.0, 0.0 );
-	Vec Svv ( 0.0, 0.0, 0.0 );
-	Vec Suv ( 0.0, 0.0, 0.0 );
-
-	Vec normal;
-
-	for ( size_t k = 0; k <= n - 1; ++k )
-	for ( size_t l = 0; l <= m; ++l )
-	{
-
-	size_t const index1 = k * ( m + 1 ) + l;
-	size_t const index2 = ( k + 1 ) * ( m + 1 ) + l;
-	Su += ( control_points[index2] - control_points[index1] ) * coeff_Su[k] * coeff_v[l];
-	}
-	Su *= n;
-
-	for ( size_t k = 0; k <= n; ++k )
-	for ( size_t l = 0; l <= m - 1; ++l )
-	{
-
-	size_t const index1 = k * ( m + 1 ) + l;
-	size_t const index2 = ( k ) * ( m + 1 ) + l + 1;
-	Sv += ( control_points[index2] - control_points[index1] ) * coeff_u[k] * coeff_Sv[l];
-	}
-	Sv *= m;
-
-	for ( size_t k = 0; k <= n - 2; ++k )
-	for ( size_t l = 0; l <= m; ++l )
-	{
-
-	size_t const index1 = k * ( m + 1 ) + l;
-	size_t const index2 = ( k + 1 ) * ( m + 1 ) + l;
-	size_t const index3 = ( k + 2 ) * ( m + 1 ) + l;
-	Suu += ( control_points[index3] - 2.0 * control_points[index2] +  control_points[index1] ) * coeff_Suu[k] * coeff_v[l];
-	}
-
-	Suu *= n * ( n - 1 );
-
-	for ( size_t k = 0; k <= n ; ++k )
-	for ( size_t l = 0; l <= m - 2; ++l )
-	{
-
-	size_t const index1 = k * ( m + 1 ) + l;
-	size_t const index2 = k * ( m + 1 ) + l + 1;
-	size_t const index3 = k * ( m + 1 ) + l + 2;
-	Svv += ( control_points[index3] - 2.0 * control_points[index2] + control_points[index1] ) * coeff_u[k] * coeff_Svv[l];
-	}
-
-	Svv *= m * ( m - 1 );
-
-	for ( size_t k = 0; k <= n - 1; ++k )
-	for ( size_t l = 0; l <= m - 1; ++l )
-	{
-
-	size_t const index1 = k * ( m + 1 ) + l;
-	size_t const index2 = ( k + 1 ) * ( m + 1 ) + l + 1;
-
-	Suv += ( control_points[index2] + control_points[index1] ) * coeff_Su[k] * coeff_Sv[l];
-	}
-
-	Suv *= m * n;
-	normal = cross ( Su, Sv );
-	normal.normalize();
-	E = Su * Su;
-	F = Su * Sv;
-	G = Sv * Sv;
-
-	L = normal * Suu;
-	M = normal * Suv;
-	N = normal * Svv;
-
-	H = ( N * E - 2 * M * F + L * G ) / ( 2 * ( E * G - F * F ) );
-	mesh.data ( *i ).mean = H;
-	}*/
 
 	// Compute mean values using normal difference angles
 	for ( MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
@@ -239,7 +144,7 @@ std::string MyViewer::nextLine ( std::ifstream &file )
 	}
 
 	QString qstr = QString::fromStdString ( line );
-	qDebug() << qstr;
+	// qDebug() << qstr;
 
 	return line;
 }
@@ -699,48 +604,7 @@ void MyViewer::keyPressEvent ( QKeyEvent * e )
 	{ QGLViewer::keyPressEvent ( e ); }
 }
 
-//void MyViewer::increaseDegree()
-//{
-//	size_t n = degree[0] + 2, m = degree[1] + 1;
-//	++degree[0];
-//	++degree[1];
-//	std::vector<qglviewer::Vec> tmpControlPoints = control_points;
-//	control_points.resize ( ( n ) * ( m  ) );
-//	tmpControlPoints.resize ( ( n  ) * ( m  ) );
-//
-//	for ( size_t j = 0; j < m; ++j )
-//	{
-//		control_points[j] = tmpControlPoints[j];
-//		for ( size_t i = 1; i < n - 1; ++i )
-//		{
-//			size_t const index = i * m + j;
-//			control_points[index] = tmpControlPoints[index - m] + ( tmpControlPoints[index] - tmpControlPoints[index - m] ) / n * ( n - i );
-//		}
-//		control_points[ ( n - 1 ) *m + j] = tmpControlPoints[ ( n - 2 ) * m + j];
-//
-//	}
-//	tmpControlPoints = control_points;
-//	++m;
-//	control_points.resize ( n * m );
-//	for ( size_t i = 0; i < n; ++i )
-//	{
-//		control_points[i * m] = tmpControlPoints[i * ( m - 1 )];
-//		for ( size_t j = 1; j < m - 1; ++j )
-//		{
-//			size_t const index = i * m + j;
-//			control_points[index] = tmpControlPoints[i * ( m - 1 ) + j - 1] + ( tmpControlPoints[i * ( m - 1 ) + j] - tmpControlPoints[i * ( m - 1 ) + j - 1] ) / m * ( m - j );
-//		}
-//		control_points[ ( i + 1 ) *m - 1] = tmpControlPoints[ ( i + 1 ) * ( m - 1 ) - 1];
-//	}
-//
-//	generateMesh();
-//	mesh.request_face_normals(); mesh.request_vertex_normals();
-//	mesh.update_face_normals();  mesh.update_vertex_normals();
-//
-//	updateMeanCurvature();
-//}
-
-void MyViewer::calculateNormals ( float _step )
+void MyViewer::calculateNormals ( size_t sampling )
 {
 	Transfinite::RMF rmf;
 
@@ -784,9 +648,9 @@ void MyViewer::calculateNormals ( float _step )
 		rmf.setEnd ( - ( derend1[1] ^ derend2[1] ).normalize() );
 		rmf.update();
 		std::vector<Vec>  normalsOfThisCurve;
-		for ( float t = 0.00f; t < 1; t += _step )
+		for ( size_t t = 0; t < sampling; ++t )
 		{
-			Vector3D p = rmf.eval ( t );
+                        Vector3D p = rmf.eval ( (double)t/sampling );
 
 			normalsOfThisCurve.push_back ( Vec ( p[0], p[1], p[2] ) );
 		}
@@ -803,9 +667,9 @@ void MyViewer::calculatePlain()
 	for ( auto i : bsCurves )
 	{
 
-		for ( float t = 0; t < 1; t += step )
+		for ( size_t t = 0; t < sampling; ++t )
 		{
-			sum = sum + i->eval ( t );
+                        sum = sum + i->eval ( (double)t/sampling );
 
 			++j;
 		}
@@ -813,7 +677,7 @@ void MyViewer::calculatePlain()
 	sum = sum / j;
 	plainPoint = Vec ( sum[0], sum[1], sum[2] );
 
-	calculateNormals ( step );
+	calculateNormals ( sampling );
 	sum = Vector3D ( 0, 0, 0 );
 	j = 0;
 	for ( auto curve : normals )
@@ -834,9 +698,9 @@ void MyViewer::calculate2DPoints (  )
 {
 	for ( auto i : bsCurves )
 	{
-		for ( float t = 0; t < 1 - step; t += step )
+		for ( size_t t = 0; t < sampling; ++t )
 		{
-			Vector3D tmp = i->eval ( t );
+                        Vector3D tmp = i->eval ( (double)t/sampling );
 			Vec q = Vec ( tmp[0], tmp[1], tmp[2] );
 			float l = ( q - plainPoint ) * plainNormal ;
 			Vec result = q - l * plainNormal;
@@ -876,130 +740,12 @@ void MyViewer::bernsteinAll ( size_t n, double u, std::vector<double> &coeff )
 
 void MyViewer::generateMesh()
 {
-////	GEOM_FADE25D::Fade_2D Triangleator;
-////	mesh.clear();
-////	std::vector<GEOM_FADE25D::Point2> points;
-////	std::vector<GEOM_FADE25D::Point2*> Delaunay;
-////
-////	std::vector<GEOM_FADE25D::Segment2> vSegments1;
-////
-////	unsigned int index = 0;
-////	// Iteralunk korbe a gorbe hataran
-////	for ( auto i : pointsOnPlain )
-////	{
-////		// Kiszedjuk az aktualis pontot, elmentjuk
-////		GEOM_FADE25D::Point2 p ( i[0], i[1], i[2] );
-////		points.push_back ( p );
-////		//	Triangleator.insert ( p );
-////
-////		//// KiszedjÅE a kovetkezo pontot is
-////		//++index;
-////		//qglviewer::Vec j;
-////		//if(index < pointsOnPlain.size())
-////		//{
-////		//	j = pointsOnPlain.at(index);
-////		//}
-////		//else
-////		//{
-////		//	// ami az elso pont, ha korbeertunk
-////		//	j = pointsOnPlain.at(0);
-////		//}
-////		//GEOM_FADE25D::Point2 p2 ( j[0], j[1], j[2] );
-////		//// A kapott 2 szomszedos pontbol csinalunk egy szakaszt
-////		//qDebug() << "Index: " << index;
-////		//qDebug() << "i: " << i[0] << " " << i[1] << " " << i[2];
-////		//qDebug() << "j: " << j[0] << " " << j[1] << " " << j[2];
-////		//vSegments1.push_back(GEOM_FADE25D::Segment2(p,p2));
-////	}
-////	Triangleator.insert ( points , Delaunay );
-////
-//////	Triangleator.refine ( Triangleator.importTriangles ( points, true, false ), 20, 2, 3, true );
-////	std::vector<GEOM_FADE25D::Point2*> vAllPoints;
-////
-////	//GEOM_FADE25D::ConstraintGraph2* pCG1(NULL);
-////	////pCG1 = Triangleator.createConstraint(vSegments1, GEOM_FADE25D::CIS_CONSTRAINED_DELAUNAY);
-////	//pCG1 = Triangleator.createConstraint(vSegments1, GEOM_FADE25D::CIS_CONFORMING_DELAUNAY);
-////	//Triangleator.applyConstraintsAndZones();
-//////
-////	//// 4) Create a Zone2 using ZL_GROW
-////	//GEOM_FADE25D::Point2 seedPoint(plainPoint[0],plainPoint[1],plainPoint[2]);
-////	//std::vector<GEOM_FADE25D::ConstraintGraph2*> vCG;
-////	//vCG.push_back(pCG1);
-////	//GEOM_FADE25D::Zone2* pZone = Triangleator.createZone(vCG, GEOM_FADE25D::ZL_GROW, seedPoint);
-////
-////	//Triangleator.refine ( pZone, 27, 0.01, 15, true );
-////
-////	std::vector<GEOM_FADE25D::Triangle2*> vAllDelaunayTriangles;
-////	std::vector<GEOM_FADE25D::Triangle2*> wtf;
-////	std::vector<GEOM_FADE25D::Triangle2*> ads;
-////
-////	Triangleator.getVertexPointers ( vAllPoints );
-////
-////
-////
-////	Triangleator.getTrianglePointers ( vAllDelaunayTriangles );
-////
-////
-////	for ( auto i : vAllDelaunayTriangles )
-////	{
-////		ads.push_back ( i );
-////	}
-////	for ( int i = 0; i < bsCurves.size() - 1; ++i )
-////	{
-////		Vec sp = ( pointsOnPlain[98 + i * 100] + pointsOnPlain[100 + i * 100] + pointsOnPlain[99 + i * 100] ) / 3.0;
-////		GEOM_FADE25D::Point2 ssp ( sp[0], sp[1], sp[2] );
-////
-////		GEOM_FADE25D::Triangle2* hsz = Triangleator.locate ( ssp );
-////		auto ithsz = std::find ( ads.begin(), ads.end(), hsz );
-////		if ( ithsz != ads.end() )
-////		{
-////			ads.erase ( ithsz );
-////		}
-////	}
-////	/*ads.pop_back();*/
-////	/*ads.pop_back();
-////	ads.pop_back();*/
-////	//ads.push_back ( vAllDelaunayTriangles.front() );
-////	//std::reverse ( ads.begin(), ads.end() );
-////	GEOM_FADE25D::Zone2* zone ( Triangleator.createZone ( ads ) );
-////	GEOM_FADE25D::Zone2* zone2 ( zone->convertToBoundedZone() );
-////
-////
-////	Triangleator.applyConstraintsAndZones();
-////	//zone->get
-////
-////	Triangleator.refine ( zone2, 20, 2, 3, true );
-////
-////	Triangleator.getVertexPointers ( vAllPoints );
-////
-////	////zone2->getTriangles ( wtf );
-////	//ads.clear();
-////	Triangleator.getTrianglePointers ( wtf );
-////	//for ( auto i : wtf )
-////	//{
-////	//	ads.push_back ( i );
-////	//}
-////	//GEOM_FADE25D::Zone2* zone3 (   );
-////	//GEOM_FADE25D::Zone2* zone4 ( zone3->convertToBoundedZone() );
-////
-////
-////	//Triangleator.applyConstraintsAndZones();
-////	//mesh.clear();
-////	//Triangleator.refine ( zone4, 20, 2, 3, true );
-////
-////	//Triangleator.getVertexPointers ( vAllPoints );
-////
-////	////zone2->getTriangles ( wtf );
-////	//wtf.clear();
-////	////ads.clear();
-////	//Triangleator.getTrianglePointers ( wtf );
-
 	Vec u ( plainNormal[1], -plainNormal[0], plainNormal[2] );
 	Vec v = u ^ plainNormal;
 	u.normalize();
 	v.normalize();
 
-	std::vector<float> points;
+	std::vector<double> points;
 	for ( auto i : pointsOnPlain )
 	{
 		points.push_back ( ( ( i - plainPoint ) *u ) );
@@ -1007,14 +753,6 @@ void MyViewer::generateMesh()
 
 	}
 
-//	std::vector<double> points =
-//	{
-//		-1, -1,
-//		1, -1,
-//		1, 1,
-//		0, 0,
-//		-1, 1
-//	};
 	size_t n = points.size() / 2;
 //
 //// Input segments : just a closed polygon
@@ -1025,7 +763,7 @@ void MyViewer::generateMesh()
 		segments[2 * i + 1] = i + 1;
 	}
 	segments[2 * n - 1] = 0;
-//
+
 // Setup input data structure
 	struct triangulateio in, out;
 	in.pointlist = &points[0];
@@ -1047,75 +785,23 @@ void MyViewer::generateMesh()
 	out.segmentlist = NULL;
 	out.segmentmarkerlist = NULL;
 
-// Call the library function [with maximum triangle area = 0.005]
-	triangulate ( ( char * ) "pa15qzQY", &in, &out, nullptr /*( struct triangulateio * ) NULL*/ );
-	std::vector<MyMesh::VertexHandle> handles, tri;
-
-	//for ( std::vector<GEOM_FADE25D::Triangle2*>::iterator it = wtf.begin();
-	//        it != wtf.end(); ++it )
-	//{
-	//	tri.clear();
-
-	//	GEOM_FADE25D::Triangle2* pT ( *it );
-	//	GEOM_FADE25D::Point2 p;
-
-	//	p = *pT->getCorner ( 0 );
-	//	handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p.x(), p.y(), p.z() ) ) );
-	//	tri.push_back ( handles[handles.size() - 1] );
-
-	//	p = *pT->getCorner ( 1 );
-	//	handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p.x(), p.y(), p.z() ) ) );
-	//	tri.push_back ( handles[handles.size() - 1] );
-
-	//	p = *pT->getCorner ( 2 );
-	//	handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p.x(), p.y(), p.z() ) ) );
-	//	tri.push_back ( handles[handles.size() - 1] );
-	//	mesh.add_face ( tri );
-	//}
-
-
-	//handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p[0], p[1], p[2] ) ) );
-	/*size_t const resolution = 30;
+// Call the library function [with maximum triangle area = 10]
+	triangulate ( ( char * ) "pa10qzQY", &in, &out, (struct triangulateio *) NULL );
 
 	mesh.clear();
 	std::vector<MyMesh::VertexHandle> handles, tri;
-	size_t const n = degree[0], m = degree[1];
 
-	std::vector<double> coeff_u, coeff_v;
-	for ( size_t i = 0; i < resolution; ++i )
-	{
-		double u = ( double ) i / ( double ) ( resolution - 1 );
-		bernsteinAll ( n, u, coeff_u );
-		for ( size_t j = 0; j < resolution; ++j )
-		{
-			double v = ( double ) j / ( double ) ( resolution - 1 );
-			bernsteinAll ( m, v, coeff_v );
-			Vec p ( 0.0, 0.0, 0.0 );
-			for ( size_t k = 0; k <= n; ++k )
-				for ( size_t l = 0; l <= m; ++l )
-				{
-					size_t const index = k * ( m + 1 ) + l;
-					p += control_points[index] * coeff_u[k] * coeff_v[l];
-				}
-			handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p[0], p[1], p[2] ) ) );
-			mesh.data ( handles[handles.size() - 1] ).u = u;
-			mesh.data ( handles[handles.size() - 1] ).v = v;
-		}
-	}
-	for ( size_t i = 0; i < resolution - 1; ++i )
-		for ( size_t j = 0; j < resolution - 1; ++j )
-		{
-			tri.clear();
-			tri.push_back ( handles[i * resolution + j] );
-			tri.push_back ( handles[i * resolution + j + 1] );
-			tri.push_back ( handles[ ( i + 1 ) * resolution + j] );
-			mesh.add_face ( tri );
-			tri.clear();
-			tri.push_back ( handles[ ( i + 1 ) * resolution + j] );
-			tri.push_back ( handles[i * resolution + j + 1] );
-			tri.push_back ( handles[ ( i + 1 ) * resolution + j + 1] );
-			mesh.add_face ( tri );
-		}*/
+        for (int i = 0; i < out.numberofpoints; ++i) {
+          Vec p = plainPoint + u * out.pointlist[2*i] + v * out.pointlist[2*i+1];
+          handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p[0], p[1], p[2] ) ) );
+        }
+
+        for (int i = 0; i < out.numberoftriangles; ++i) {
+          tri.clear();
+          for (int j = 0; j < 3; ++j)
+            tri.push_back ( handles[out.trianglelist[3*i+j]] );
+          mesh.add_face ( tri );
+        }
 }
 
 void MyViewer::mouseMoveEvent ( QMouseEvent * e )
@@ -1138,7 +824,7 @@ void MyViewer::mouseMoveEvent ( QMouseEvent * e )
 		mesh.request_face_normals(); mesh.request_vertex_normals();
 		mesh.update_face_normals();  mesh.update_vertex_normals();
 		updateMeanCurvature();
-		calculateNormals ( 0.1f );
+		calculateNormals ( sampling );
 		updateGL();
 	}
 	else

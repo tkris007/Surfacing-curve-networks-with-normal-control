@@ -7,6 +7,10 @@ QT += gui widgets opengl xml
 HEADERS = MyWindow.h MyViewer.h MyViewer.hpp
 SOURCES = MyWindow.cpp MyViewer.cpp main.cpp vector.cc bspline.cc rmf.cc
 
+linux {
+LIBS += triangle.o
+}
+
 LIBS *= -lQGLViewer -L/usr/lib/OpenMesh -lOpenMeshCored -lGL -lGLU
 
 RESOURCES = sample-framework.qrc
