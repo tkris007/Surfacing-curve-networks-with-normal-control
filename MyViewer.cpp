@@ -819,6 +819,9 @@ void MyViewer::generateMesh()
 
 void MyViewer::calculateWeights()
 {
+	Eigen::MatrixXd M ( mesh.n_vertices(), mesh.n_vertices() );
+	Eigen::MatrixXd Ls ( mesh.n_vertices(), mesh.n_vertices() );
+	Eigen::MatrixXd L ( mesh.n_vertices(), mesh.n_vertices() );
 	// halfEdge oppositeAngles
 	for ( MyMesh::HalfedgeIter i = mesh.halfedges_begin(), ie = mesh.halfedges_end(); i != ie; ++i )
 	{
@@ -841,16 +844,50 @@ void MyViewer::calculateWeights()
 		mesh.data ( *i ).weight = ( cot ( mesh.data ( h1 ).oppositeAngle ) + cot ( mesh.data ( h2 ).oppositeAngle ) ) / 2.0;
 	}
 
-	//Voronoi Area
+	//Voronoi Area and M matrix calculation
+	int index = 0;
 	for ( MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
 	{
 		for ( MyMesh::ConstVertexEdgeIter j ( mesh, *i ); j.is_valid(); ++j )
 		{
-			MyMesh::HalfedgeHandle h1 = mesh.halfedge_handle ( *j, 0 );
-			double lengthPow2 = halfedgeVector ( h1 ) | halfedgeVector ( h1 );
-			mesh.data ( *i ).VoronoiArea += lengthPow2 * mesh.data ( *j ).weight / 4.0;
+			mesh.data ( *i ).VoronoiArea += mesh.calc_edge_sqr_length ( *j ) * mesh.data ( *j ).weight / 4.0;
+		}
+		M ( index, index ) = 1 / mesh.data ( *i ).VoronoiArea;
+		++index;
+	}
+
+	// calculate M and Ls matrices
+	for ( size_t i = 0; i < mesh.n_vertices; i++ )
+	{
+		for ( size_t j = 0; j < mesh.n_vertices; j++ )
+		{
+			Ls ( i, j ) = 0;
+			if ( i == j )
+			{
+				MyMesh::VertexHandle vi = mesh.vertex_handle ( i );
+				double sum = 0;
+				for ( MyMesh::ConstVertexEdgeIter k ( mesh, vi ); k.is_valid(); ++k )
+				{
+					sum += mesh.data ( k ).weight;
+				}
+				Ls ( i, j ) = -sum;
+			}
+			else
+			{
+				MyMesh::VertexHandle vi = mesh.vertex_handle ( i );
+				MyMesh::VertexHandle vj = mesh.vertex_handle ( j );
+				MyMesh::HalfedgeHandle he = mesh.find_halfedge ( vi, vj );
+				if ( he.is_valid() )
+				{
+					Ls ( i, j ) = mesh.data ( mesh.edge_handle ( he ) ).weight;
+				}
+
+			}
 		}
 	}
+
+	//calculate L matrice
+	L = M.inverse() * Ls;
 
 
 }
