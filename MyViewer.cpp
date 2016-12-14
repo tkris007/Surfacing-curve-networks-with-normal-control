@@ -20,6 +20,11 @@
 using qglviewer::Vec;
 using Geometry::Vector3D;
 
+double cot ( double radian )
+{
+	return  cos ( radian ) / sin ( radian );
+}
+
 MyViewer::MyViewer ( QWidget *parent ) :
 	QGLViewer ( parent ),
 	mean_min ( 0.0 ), mean_max ( 0.0 ), cutoff_ratio ( 0.05 ),
@@ -31,7 +36,7 @@ MyViewer::MyViewer ( QWidget *parent ) :
 	setSelectRegionHeight ( 10 );
 	axes.shown = false;
 	step = 0.01f;
-        sampling = 10;
+	sampling = 10;
 }
 
 MyViewer::~MyViewer()
@@ -424,14 +429,14 @@ void MyViewer::drawNormals() const
 	for ( size_t i = 0; i < bsCurves.size(); ++i )
 	{
 		int j = 0;
-		for ( float t = 0.00f; t < 1; t += step * 10 )
+		for ( size_t t = 0; t < sampling; t += 1 )
 		{
 
 			/*Vector3D p1 = rmf.eval ( t ) ;*/
-			Vector3D p2 = bsCurves[i]->eval ( t );
-			Vec const arrowEndPoint = normals.at ( i ) [j * 10];
+			Vector3D p2 = bsCurves[i]->eval ( ( double ) t / sampling );
+			Vec const arrowEndPoint = normals.at ( i ) [t]; //.at ( i ) [j * 10];
 			//arrowEndPoint.normalize();
-			Vec const &arrowStartPoint = Vec ( p2[0], p2[1], p2[2] );
+			Vec const & arrowStartPoint = Vec ( p2[0], p2[1], p2[2] );
 
 			glColor3f ( 1.0, 0.0, 0.0 );
 			drawArrow ( arrowStartPoint, ( arrowStartPoint + arrowEndPoint * normalSize ) , normalSize / 50.0 );
@@ -650,7 +655,7 @@ void MyViewer::calculateNormals ( size_t sampling )
 		std::vector<Vec>  normalsOfThisCurve;
 		for ( size_t t = 0; t < sampling; ++t )
 		{
-                        Vector3D p = rmf.eval ( (double)t/sampling );
+			Vector3D p = rmf.eval ( ( double ) t / sampling );
 
 			normalsOfThisCurve.push_back ( Vec ( p[0], p[1], p[2] ) );
 		}
@@ -669,7 +674,7 @@ void MyViewer::calculatePlain()
 
 		for ( size_t t = 0; t < sampling; ++t )
 		{
-                        sum = sum + i->eval ( (double)t/sampling );
+			sum = sum + i->eval ( ( double ) t / sampling );
 
 			++j;
 		}
@@ -700,7 +705,7 @@ void MyViewer::calculate2DPoints (  )
 	{
 		for ( size_t t = 0; t < sampling; ++t )
 		{
-                        Vector3D tmp = i->eval ( (double)t/sampling );
+			Vector3D tmp = i->eval ( ( double ) t / sampling );
 			Vec q = Vec ( tmp[0], tmp[1], tmp[2] );
 			float l = ( q - plainPoint ) * plainNormal ;
 			Vec result = q - l * plainNormal;
@@ -740,9 +745,13 @@ void MyViewer::bernsteinAll ( size_t n, double u, std::vector<double> &coeff )
 
 void MyViewer::generateMesh()
 {
-	Vec u ( plainNormal[1], -plainNormal[0], plainNormal[2] );
-	Vec v = u ^ plainNormal;
+	Vec w1 ( 1, 0, 0 ), w2 ( 0, 1, 0 ), u, v;
+	u = plainNormal ^ w1;
+	v = plainNormal ^ w2;
+	if ( v.norm() > u.norm() )
+	{ u = v; }
 	u.normalize();
+	v = u ^ plainNormal;
 	v.normalize();
 
 	std::vector<double> points;
@@ -753,11 +762,11 @@ void MyViewer::generateMesh()
 
 	}
 
-	size_t n = points.size() / 2;
+	int n = static_cast<int> ( points.size() / 2 );
 //
 //// Input segments : just a closed polygon
 	std::vector<int> segments ( n * 2 );
-	for ( size_t i = 0; i < n; ++i )
+	for ( int i = 0; i < n; ++i )
 	{
 		segments[2 * i] = i;
 		segments[2 * i + 1] = i + 1;
@@ -786,23 +795,67 @@ void MyViewer::generateMesh()
 	out.segmentmarkerlist = NULL;
 
 // Call the library function [with maximum triangle area = 10]
-	triangulate ( ( char * ) "pa10qzQY", &in, &out, (struct triangulateio *) NULL );
+	triangulate ( ( char * ) "pa10qzQY", &in, &out, ( struct triangulateio * ) NULL );
 
 	mesh.clear();
 	std::vector<MyMesh::VertexHandle> handles, tri;
 
-        for (int i = 0; i < out.numberofpoints; ++i) {
-          Vec p = plainPoint + u * out.pointlist[2*i] + v * out.pointlist[2*i+1];
-          handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p[0], p[1], p[2] ) ) );
-        }
+	for ( int i = 0; i < out.numberofpoints; ++i )
+	{
+		Vec p = plainPoint + u * out.pointlist[2 * i] + v * out.pointlist[2 * i + 1];
+		handles.push_back ( mesh.add_vertex ( MyMesh::Point ( p[0], p[1], p[2] ) ) );
+	}
 
-        for (int i = 0; i < out.numberoftriangles; ++i) {
-          tri.clear();
-          for (int j = 0; j < 3; ++j)
-            tri.push_back ( handles[out.trianglelist[3*i+j]] );
-          mesh.add_face ( tri );
-        }
+	for ( int i = 0; i < out.numberoftriangles; ++i )
+	{
+		tri.clear();
+		for ( int j = 0; j < 3; ++j )
+		{ tri.push_back ( handles[out.trianglelist[3 * i + j]] ); }
+		mesh.add_face ( tri );
+	}
+
+	calculateWeights();
 }
+
+void MyViewer::calculateWeights()
+{
+	// halfEdge oppositeAngles
+	for ( MyMesh::HalfedgeIter i = mesh.halfedges_begin(), ie = mesh.halfedges_end(); i != ie; ++i )
+	{
+		if ( mesh.is_boundary ( *i ) )
+		{ mesh.data ( *i ).oppositeAngle = 0; }
+		else
+		{
+			MyMesh::HalfedgeHandle h1 = mesh.next_halfedge_handle ( *i );
+			MyMesh::HalfedgeHandle h2 = mesh.next_halfedge_handle ( h1 );
+			h1 = mesh.opposite_halfedge_handle ( h1 );
+			mesh.data ( *i ).oppositeAngle =
+			    acos ( halfedgeVector ( h1 ).normalize() | halfedgeVector ( h2 ).normalize() );
+		}
+	}
+	//Edge weights
+	for ( MyMesh::EdgeIter i = mesh.edges_begin(), ie = mesh.edges_end(); i != ie; ++i )
+	{
+		MyMesh::HalfedgeHandle h1 = mesh.halfedge_handle ( *i, 0 );
+		MyMesh::HalfedgeHandle h2 = mesh.halfedge_handle ( *i, 1 );
+		mesh.data ( *i ).weight = ( cot ( mesh.data ( h1 ).oppositeAngle ) + cot ( mesh.data ( h2 ).oppositeAngle ) ) / 2.0;
+	}
+
+	//Voronoi Area
+	for ( MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
+	{
+		for ( MyMesh::ConstVertexEdgeIter j ( mesh, *i ); j.is_valid(); ++j )
+		{
+			MyMesh::HalfedgeHandle h1 = mesh.halfedge_handle ( *j, 0 );
+			double lengthPow2 = halfedgeVector ( h1 ) | halfedgeVector ( h1 );
+			mesh.data ( *i ).VoronoiArea += lengthPow2 * mesh.data ( *j ).weight / 4.0;
+		}
+	}
+
+
+}
+
+
 
 void MyViewer::mouseMoveEvent ( QMouseEvent * e )
 {

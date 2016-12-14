@@ -24,6 +24,7 @@ extern "C" {
 #include <QGLViewer/qglviewer.h>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
 #include "rmf.hh"
+#include <Eigen\Eigen>
 
 using qglviewer::Vec;
 
@@ -65,10 +66,19 @@ private:
 		{
 			double area;              // total area of the surrounding triangles
 			double mean;              // approximated mean curvature
+			double VoronoiArea;
 		};
 		FaceTraits
 		{
 			double area;
+		};
+		EdgeTraits
+		{
+			double weight;
+		};
+		HalfedgeTraits
+		{
+			double oppositeAngle;
 		};
 	};
 	typedef OpenMesh::TriMesh_ArrayKernelT<MyTraits> MyMesh;
@@ -78,6 +88,7 @@ private:
 	void updateMeanMinMax();
 	void updateMeanCurvature ( bool update_min_max = true );
 	void meanMapColor ( double d, double *color ) const;
+
 	void drawAxes() const;
 	void drawAxesWithNames() const;
 	void drawCurves() const;
@@ -90,11 +101,12 @@ private:
 	void calculateNormals ( size_t _step );
 	void calculatePlain();
 	void calculate2DPoints (  );
+	void calculateWeights();
 
 	std::vector<Vec> control_points;
 
 	float step;
-        size_t sampling;
+	size_t sampling;
 	Vec plainPoint;
 	Vec plainNormal;
 	std::vector<std::shared_ptr<Geometry::BSCurve>> bsCurves;
