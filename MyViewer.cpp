@@ -814,8 +814,22 @@ void MyViewer::generateMesh()
 		{ tri.push_back ( handles[out.trianglelist[3 * i + j]] ); }
 		mesh.add_face ( tri );
 	}
+	mesh.request_vertex_normals();
 
-
+	int boundaryVertexIndex = 0;
+	for ( MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
+	{
+		if ( mesh.is_boundary ( *i ) )
+		{
+			mesh.set_point ( *i, samples[boundaryVertexIndex] );
+			mesh.set_normal ( *i, normalSamples[boundaryVertexIndex] );
+			++boundaryVertexIndex;
+		}
+		else
+		{
+			mesh.set_normal ( *i, Vector ( plainNormal[0], plainNormal[1], plainNormal[2] ) );
+		}
+	}
 	calculateWeights();
 	modifyMesh();
 }
@@ -868,7 +882,7 @@ void MyViewer::calculateWeights()
 			mesh.data ( *i ).VoronoiArea += mesh.calc_edge_sqr_length ( *j ) * mesh.data ( *j ).weight / 4.0;
 		}
 		qDebug() << mesh.data ( *i ).VoronoiArea;
-		M ( index, index ) = mesh.data ( *i ).VoronoiArea;
+		M ( index, index ) = 1.0 / mesh.data ( *i ).VoronoiArea;
 		++index;
 	}
 
@@ -879,9 +893,9 @@ void MyViewer::calculateWeights()
 		Vcs ( i, 1 ) = mesh.point ( mesh.vertex_handle ( i ) ) [1];
 		Vcs ( i, 2 ) = mesh.point ( mesh.vertex_handle ( i ) ) [2];
 
-		/*Ncs ( i, 0 ) = mesh.normal ( mesh.vertex_handle ( i ) ) [0];
+		Ncs ( i, 0 ) = mesh.normal ( mesh.vertex_handle ( i ) ) [0];
 		Ncs ( i, 1 ) = mesh.normal ( mesh.vertex_handle ( i ) ) [1];
-		Ncs ( i, 2 ) = mesh.normal ( mesh.vertex_handle ( i ) ) [2];*/
+		Ncs ( i, 2 ) = mesh.normal ( mesh.vertex_handle ( i ) ) [2];
 		for ( int j = 0; j < mesh.n_vertices(); j++ )
 		{
 			Ls ( i, j ) = 0;
@@ -889,7 +903,7 @@ void MyViewer::calculateWeights()
 			{
 				MyMesh::VertexHandle vi = mesh.vertex_handle ( i );
 				double sum = 0;
-				for ( MyMesh::ConstVertexEdgeIter k ( mesh, vi ); k.is_valid(); ++k )
+				for ( MyMesh::ConstVertexEdgeIter k ( mesh, vi ); k; ++k )
 				{
 					sum += mesh.data ( k ).weight;
 				}
@@ -910,15 +924,14 @@ void MyViewer::calculateWeights()
 	}
 
 	//calculate L matrice
-	L = M * Ls;
+	L = M.inverse() * Ls;
 	L = L * L;
-
 
 	Eigen::MatrixXd bNorm = Eigen::MatrixXd::Zero ( mesh.n_vertices() - samples.size(), 3 );
 
 	Eigen::MatrixXd bVert ( mesh.n_vertices() - samples.size(), 3 );
 	bVert = Eigen::MatrixXd::Zero ( bVert.rows(), bVert.cols() );
-//	qDebug() << bVert ( 0, 0 );
+
 	Eigen::MatrixXd A = Eigen::MatrixXd::Zero ( mesh.n_vertices() - samples.size(), mesh.n_vertices() - samples.size() );
 
 	int BrowIndex = 0;
@@ -939,7 +952,8 @@ void MyViewer::calculateWeights()
 					if ( mesh.is_boundary ( mesh.vertex_handle ( k ) ) )
 					{
 						bVert ( BrowIndex, BcolIndex ) -= L ( i, k ) * Vcs ( k, j );
-						//bNorm ( BrowIndex, BcolIndex ) -= L ( i, k ) * Ncs ( k, j );
+
+						bNorm ( BrowIndex, BcolIndex ) -= L ( i, k ) * Ncs ( k, j );
 					}
 					++BcolIndex;
 
@@ -957,8 +971,9 @@ void MyViewer::calculateWeights()
 			++ArowIndex;
 		}
 	}
+
 	newCoords = A.colPivHouseholderQr().solve ( bVert );
-	//newNormals = A.colPivHouseholderQr().solve ( bNorm );
+	newNormals = A.colPivHouseholderQr().solve ( bNorm );
 }
 void MyViewer::modifyMesh()
 {
@@ -970,7 +985,7 @@ void MyViewer::modifyMesh()
 		if ( mesh.is_boundary ( *i ) )
 		{
 			mesh.set_point ( *i, samples[boundaryVertexIndex] );
-			//	mesh.set_normal ( *i, normalSamples[boundaryVertexIndex] );
+			mesh.set_normal ( *i, normalSamples[boundaryVertexIndex] );
 			++boundaryVertexIndex;
 		}
 		else
@@ -978,9 +993,9 @@ void MyViewer::modifyMesh()
 			mesh.set_point ( *i, Vector ( newCoords ( innerVertexIndex, 0 ),
 			                              newCoords ( innerVertexIndex, 1 ),
 			                              newCoords ( innerVertexIndex, 2 ) ) );
-			/*mesh.set_normal ( *i, Vector ( newNormals ( innerVertexIndex, 0 ),
+			mesh.set_normal ( *i, Vector ( newNormals ( innerVertexIndex, 0 ),
 			                               newNormals ( innerVertexIndex, 1 ),
-			                               newNormals ( innerVertexIndex, 2 ) ) );*/
+			                               newNormals ( innerVertexIndex, 2 ) ) );
 			++innerVertexIndex;
 		}
 	}
