@@ -221,27 +221,13 @@ bool MyViewer::openBSpline ( std::string const &filename )
 		}
 		file.close();
 
-		calculatePlain();
+
 		generateMesh();
 		mesh.request_face_normals(); mesh.request_vertex_normals();
 		mesh.update_face_normals();  mesh.update_vertex_normals();
 		updateMeanCurvature();
 
-		MyMesh::Point box_min, box_max;
-		box_min = box_max = mesh.point ( *mesh.vertices_begin() );
-		for ( MyMesh::ConstVertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
-		{
-			box_min.minimize ( mesh.point ( *i ) );
-			box_max.maximize ( mesh.point ( *i ) );
-		}
-		camera()->setSceneBoundingBox ( Vec ( box_min[0], box_min[1], box_min[2] ),
-		                                Vec ( box_max[0], box_max[1], box_max[2] ) );
-		/* camera()->setSceneBoundingBox ( Vec ( -150, -150, -150 ),
-		                                 Vec ( 150, 150, 150 ) );*/
-		camera()->showEntireScene();
-		/*camera()->setSceneCenter ( Vec ( -0, -0, -0 ) );
-		camera()->setSceneRadius ( 250 );
-		camera()->showEntireScene();*/
+		focusOnMesh();
 
 		setSelectedName ( -1 );
 		axes.shown = false;
@@ -586,11 +572,12 @@ void MyViewer::keyPressEvent ( QKeyEvent * e )
 			updateGL();
 			break;
 		case Qt::Key_G:
-			calculatePlain();
 			generateMesh();
 			mesh.request_face_normals(); mesh.request_vertex_normals();
 			mesh.update_face_normals();  mesh.update_vertex_normals();
 			updateMeanCurvature();
+			focusOnMesh();
+
 			updateGL();
 			break;
 		case Qt::Key_8:
@@ -611,6 +598,8 @@ void MyViewer::keyPressEvent ( QKeyEvent * e )
 
 void MyViewer::calculateNormals ( size_t sampling )
 {
+	normals.clear();
+	normalSamples.clear();
 	Transfinite::RMF rmf;
 
 	for ( size_t i = 0; i < bsCurves.size(); ++i )
@@ -666,7 +655,6 @@ void MyViewer::calculateNormals ( size_t sampling )
 void MyViewer::calculatePlain()
 {
 	pointsOnPlain.clear();
-	normals.clear();
 	Vector3D sum;
 	float j = 0;
 	for ( auto i : bsCurves )
@@ -701,6 +689,8 @@ void MyViewer::calculatePlain()
 
 void MyViewer::calculate2DPoints (  )
 {
+	pointsOnPlain.clear();
+	samples.clear();
 	for ( auto i : bsCurves )
 	{
 		for ( size_t t = 0; t < sampling; ++t )
@@ -746,6 +736,7 @@ void MyViewer::bernsteinAll ( size_t n, double u, std::vector<double> &coeff )
 
 void MyViewer::generateMesh()
 {
+	calculatePlain();
 	Vec w1 ( 1, 0, 0 ), w2 ( 0, 1, 0 ), u, v;
 	u = plainNormal ^ w1;
 	v = plainNormal ^ w2;
@@ -975,6 +966,7 @@ void MyViewer::calculateWeights()
 	newCoords = A.colPivHouseholderQr().solve ( bVert );
 	newNormals = A.colPivHouseholderQr().solve ( bNorm );
 }
+
 void MyViewer::modifyMesh()
 {
 	int boundaryVertexIndex = 0;
@@ -1017,11 +1009,8 @@ void MyViewer::mouseMoveEvent ( QMouseEvent * e )
 		bsCurves[selected / 1000]->getControlPoints() [selected % 1000][0] = Vec ( axes.position[0], axes.position[1], axes.position[2] ) [0];
 		bsCurves[selected / 1000]->getControlPoints() [selected % 1000][1] = Vec ( axes.position[0], axes.position[1], axes.position[2] ) [1];
 		bsCurves[selected / 1000]->getControlPoints() [selected % 1000][2] = Vec ( axes.position[0], axes.position[1], axes.position[2] ) [2];
-		generateMesh();
-		mesh.request_face_normals(); mesh.request_vertex_normals();
-		mesh.update_face_normals();  mesh.update_vertex_normals();
-		updateMeanCurvature();
-		calculateNormals ( sampling );
+
+
 		updateGL();
 	}
 	else
@@ -1061,4 +1050,16 @@ QString MyViewer::helpString() const
 	return text;
 }
 
-
+void MyViewer::focusOnMesh()
+{
+	MyMesh::Point box_min, box_max;
+	box_min = box_max = mesh.point ( *mesh.vertices_begin() );
+	for ( MyMesh::ConstVertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
+	{
+		box_min.minimize ( mesh.point ( *i ) );
+		box_max.maximize ( mesh.point ( *i ) );
+	}
+	camera()->setSceneBoundingBox ( Vec ( box_min[0], box_min[1], box_min[2] ),
+	                                Vec ( box_max[0], box_max[1], box_max[2] ) );
+	camera()->showEntireScene();
+}

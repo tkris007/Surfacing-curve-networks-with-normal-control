@@ -103,7 +103,7 @@ private:
 	void calculate2DPoints (  );
 	void calculateWeights();
 	void modifyMesh();
-
+	void focusOnMesh();
 	std::vector<Vec> control_points;
 
 	float step;
