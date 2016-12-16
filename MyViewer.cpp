@@ -656,7 +656,7 @@ void MyViewer::calculateNormals ( size_t sampling )
 		for ( size_t t = 0; t < sampling; ++t )
 		{
 			Vector3D p = rmf.eval ( ( double ) t / sampling );
-
+			normalSamples.push_back ( Vector ( p[0], p[1], p[2] ) );
 			normalsOfThisCurve.push_back ( Vec ( p[0], p[1], p[2] ) );
 		}
 		normals[i] = normalsOfThisCurve ;
@@ -707,6 +707,7 @@ void MyViewer::calculate2DPoints (  )
 		{
 			Vector3D tmp = i->eval ( ( double ) t / sampling );
 			Vec q = Vec ( tmp[0], tmp[1], tmp[2] );
+			samples.push_back ( Vector ( tmp[0], tmp[1], tmp[2] ) );
 			float l = ( q - plainPoint ) * plainNormal ;
 			Vec result = q - l * plainNormal;
 			pointsOnPlain.push_back ( result );
@@ -814,7 +815,9 @@ void MyViewer::generateMesh()
 		mesh.add_face ( tri );
 	}
 
+
 	calculateWeights();
+	modifyMesh();
 }
 
 void MyViewer::calculateWeights()
@@ -822,11 +825,19 @@ void MyViewer::calculateWeights()
 	Eigen::MatrixXd M ( mesh.n_vertices(), mesh.n_vertices() );
 	Eigen::MatrixXd Ls ( mesh.n_vertices(), mesh.n_vertices() );
 	Eigen::MatrixXd L ( mesh.n_vertices(), mesh.n_vertices() );
+	Eigen::MatrixXd Vcs ( mesh.n_vertices(), 3 );
+	Eigen::MatrixXd Ncs ( mesh.n_vertices(), 3 );
 	// halfEdge oppositeAngles
 	for ( MyMesh::HalfedgeIter i = mesh.halfedges_begin(), ie = mesh.halfedges_end(); i != ie; ++i )
 	{
 		if ( mesh.is_boundary ( *i ) )
-		{ mesh.data ( *i ).oppositeAngle = 0; }
+		{
+			MyMesh::HalfedgeHandle h1 = mesh.opposite_halfedge_handle ( *i );
+			MyMesh::HalfedgeHandle h2 = mesh.next_halfedge_handle ( h1 );
+			h1 = mesh.next_halfedge_handle ( h2 );
+			mesh.data ( *i ).oppositeAngle =
+			    acos ( -halfedgeVector ( h1 ).normalize() | halfedgeVector ( h2 ).normalize() );
+		}
 		else
 		{
 			MyMesh::HalfedgeHandle h1 = mesh.next_halfedge_handle ( *i );
@@ -834,6 +845,8 @@ void MyViewer::calculateWeights()
 			h1 = mesh.opposite_halfedge_handle ( h1 );
 			mesh.data ( *i ).oppositeAngle =
 			    acos ( halfedgeVector ( h1 ).normalize() | halfedgeVector ( h2 ).normalize() );
+			qDebug() << "angles";
+			qDebug() << mesh.data ( *i ).oppositeAngle;
 		}
 	}
 	//Edge weights
@@ -842,6 +855,8 @@ void MyViewer::calculateWeights()
 		MyMesh::HalfedgeHandle h1 = mesh.halfedge_handle ( *i, 0 );
 		MyMesh::HalfedgeHandle h2 = mesh.halfedge_handle ( *i, 1 );
 		mesh.data ( *i ).weight = ( cot ( mesh.data ( h1 ).oppositeAngle ) + cot ( mesh.data ( h2 ).oppositeAngle ) ) / 2.0;
+		qDebug() << "edge weigths";
+		qDebug() << mesh.data ( *i ).weight;
 	}
 
 	//Voronoi Area and M matrix calculation
@@ -852,14 +867,22 @@ void MyViewer::calculateWeights()
 		{
 			mesh.data ( *i ).VoronoiArea += mesh.calc_edge_sqr_length ( *j ) * mesh.data ( *j ).weight / 4.0;
 		}
-		M ( index, index ) = 1 / mesh.data ( *i ).VoronoiArea;
+		qDebug() << mesh.data ( *i ).VoronoiArea;
+		M ( index, index ) = mesh.data ( *i ).VoronoiArea;
 		++index;
 	}
 
 	// calculate M and Ls matrices
-	for ( size_t i = 0; i < mesh.n_vertices; i++ )
+	for ( int i = 0; i < mesh.n_vertices(); i++ )
 	{
-		for ( size_t j = 0; j < mesh.n_vertices; j++ )
+		Vcs ( i, 0 ) = mesh.point ( mesh.vertex_handle ( i ) ) [0];
+		Vcs ( i, 1 ) = mesh.point ( mesh.vertex_handle ( i ) ) [1];
+		Vcs ( i, 2 ) = mesh.point ( mesh.vertex_handle ( i ) ) [2];
+
+		/*Ncs ( i, 0 ) = mesh.normal ( mesh.vertex_handle ( i ) ) [0];
+		Ncs ( i, 1 ) = mesh.normal ( mesh.vertex_handle ( i ) ) [1];
+		Ncs ( i, 2 ) = mesh.normal ( mesh.vertex_handle ( i ) ) [2];*/
+		for ( int j = 0; j < mesh.n_vertices(); j++ )
 		{
 			Ls ( i, j ) = 0;
 			if ( i == j )
@@ -887,12 +910,81 @@ void MyViewer::calculateWeights()
 	}
 
 	//calculate L matrice
-	L = M.inverse() * Ls;
+	L = M * Ls;
+	L = L * L;
 
 
+	Eigen::MatrixXd bNorm = Eigen::MatrixXd::Zero ( mesh.n_vertices() - samples.size(), 3 );
+
+	Eigen::MatrixXd bVert ( mesh.n_vertices() - samples.size(), 3 );
+	bVert = Eigen::MatrixXd::Zero ( bVert.rows(), bVert.cols() );
+//	qDebug() << bVert ( 0, 0 );
+	Eigen::MatrixXd A = Eigen::MatrixXd::Zero ( mesh.n_vertices() - samples.size(), mesh.n_vertices() - samples.size() );
+
+	int BrowIndex = 0;
+	int BcolIndex;
+	int ArowIndex = 0;
+	int AcolIndex;
+	for ( int i = 0; i < mesh.n_vertices(); i++ )
+	{
+
+		AcolIndex = 0;
+		if ( !mesh.is_boundary ( mesh.vertex_handle ( i ) ) )
+		{
+			for ( int k = 0; k < mesh.n_vertices(); k++ )
+			{
+				BcolIndex = 0;
+				for ( int j = 0; j < 3; j++ )
+				{
+					if ( mesh.is_boundary ( mesh.vertex_handle ( k ) ) )
+					{
+						bVert ( BrowIndex, BcolIndex ) -= L ( i, k ) * Vcs ( k, j );
+						//bNorm ( BrowIndex, BcolIndex ) -= L ( i, k ) * Ncs ( k, j );
+					}
+					++BcolIndex;
+
+				}
+
+				if ( !mesh.is_boundary ( mesh.vertex_handle ( k ) ) )
+				{
+					A ( ArowIndex, AcolIndex ) = L ( i, k );
+
+					++AcolIndex;
+				}
+
+			}
+			++BrowIndex;
+			++ArowIndex;
+		}
+	}
+	newCoords = A.colPivHouseholderQr().solve ( bVert );
+	//newNormals = A.colPivHouseholderQr().solve ( bNorm );
 }
+void MyViewer::modifyMesh()
+{
+	int boundaryVertexIndex = 0;
+	int innerVertexIndex = 0;
 
-
+	for ( MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i )
+	{
+		if ( mesh.is_boundary ( *i ) )
+		{
+			mesh.set_point ( *i, samples[boundaryVertexIndex] );
+			//	mesh.set_normal ( *i, normalSamples[boundaryVertexIndex] );
+			++boundaryVertexIndex;
+		}
+		else
+		{
+			mesh.set_point ( *i, Vector ( newCoords ( innerVertexIndex, 0 ),
+			                              newCoords ( innerVertexIndex, 1 ),
+			                              newCoords ( innerVertexIndex, 2 ) ) );
+			/*mesh.set_normal ( *i, Vector ( newNormals ( innerVertexIndex, 0 ),
+			                               newNormals ( innerVertexIndex, 1 ),
+			                               newNormals ( innerVertexIndex, 2 ) ) );*/
+			++innerVertexIndex;
+		}
+	}
+}
 
 void MyViewer::mouseMoveEvent ( QMouseEvent * e )
 {

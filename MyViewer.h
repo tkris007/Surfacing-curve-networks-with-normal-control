@@ -102,6 +102,7 @@ private:
 	void calculatePlain();
 	void calculate2DPoints (  );
 	void calculateWeights();
+	void modifyMesh();
 
 	std::vector<Vec> control_points;
 
@@ -112,6 +113,10 @@ private:
 	std::vector<std::shared_ptr<Geometry::BSCurve>> bsCurves;
 	std::map<size_t, std::vector<Vec> > normals;
 	std::vector<Vec> pointsOnPlain;
+	std::vector<Vector> samples;
+	std::vector<Vector> normalSamples;
+	Eigen::MatrixXd newCoords;
+	Eigen::MatrixXd newNormals;
 	MyMesh mesh;
 	double mean_min, mean_max;
 	double cutoff_ratio;
